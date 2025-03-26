@@ -11,11 +11,12 @@ class LLM:
     pass
 
 class PredictionTask:
-  def __init__(self, task_id:int, model: LLM, user: User ):
+  def __init__(self, task_id:int, model: LLM, user: User, status ):
     self.task_id = task_id
     self.model = model
     self.user = user
     self.created_at = datetime.now ()
+    self.status = status
     
 
 class Transaction:

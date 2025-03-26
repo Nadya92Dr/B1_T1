@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm
+FROM python:3.13.2
 
 WORKDIR /app
 
@@ -8,6 +8,6 @@ RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 
 EXPOSE 8080
 
-COPY ./ /app
+#COPY ./ /app
 
-CMD ['python' , 'main.py']
+CMD [ "python" , "main.py"]
