@@ -29,8 +29,8 @@ class Admin (User):
   def __init__(self, user_id:int, nickname: str):
     super().__init__(
         user_id = user_id,
-        email = os.getenv ('Admin_email'),
-        password = os.getenv ('Admin_password'),
+        email = os.getenv ('ADMIN_EMAIL', 'admin@mail.ru'),
+        password = os.getenv ('ADMIN_PASSWORD', 'admin'),
         nickname = nickname)
     
   def recharge_balance (self, user:User, amount: int) -> None:
