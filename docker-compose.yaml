@@ -4,23 +4,23 @@ services:
     build:
       context: ./app/
       dockerfile: Dockerfile
-    #image: mlproject-api:latest
     env_file:
-      - ./app/.env
+      - .env
     ports:
       - 8011:8080
     volumes:
       - ./app:/app
-  # web:
-  #   build: ./nginx
-  #   ports:
-  #     - 80:80 - 443:443
-  #   depends_on:
-  #     - ./app
+  web:
+    build: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - app
   rabbitmq:
     image: rabbitmq:4.0.7
     hostname: rabbitmq
-    restart: always
+    restart: on-failure
     environment:
       - RABBITMQ_DEFAULT_USER=rmuser
       - RABBITMQ_DEFAULT_PASS=rmpassword
@@ -28,11 +28,11 @@ services:
       - 15672:15672
       - 5672:5672
     volumes:
-      - ./rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq_volume:/app/rabbitmq_volume
   database:
     image: postgres:16-alpine
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/
+      - ./postgres_volume:/app/postgres_volume
     expose:
       - 5430:5432
     environment:
