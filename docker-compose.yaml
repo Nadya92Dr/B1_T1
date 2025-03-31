@@ -30,13 +30,11 @@ services:
       - 15672:15672
       - 5672:5672
     volumes:
-      - ./rabbitmq_volume:/app/rabbitmq_volume
-  volumes:
-    rabbitmq_volume:
+      - rabbitmq_volume:/app/rabbitmq_volume
   database:
     image: postgres:16-alpine
     volumes:
-      - ./postgres_volume:/var/lib/postgresql/data
+      - postgres_volume:/var/lib/postgresql/data
     ports:
       - 5430:5432
     environment:
@@ -45,3 +43,4 @@ services:
       - DB_NAME=postgres_db
   volumes:
     postgres_volume:
+    rabbitmq_volume:
