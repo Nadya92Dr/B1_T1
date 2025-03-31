@@ -10,6 +10,8 @@ services:
       - 8011:8080
     volumes:
       - ./app:/app
+    depends_on:
+      - database
   web:
     build: ./nginx
     ports:
@@ -29,13 +31,17 @@ services:
       - 5672:5672
     volumes:
       - ./rabbitmq_volume:/app/rabbitmq_volume
+  volumes:
+    rabbitmq_volume:
   database:
     image: postgres:16-alpine
     volumes:
-      - ./postgres_volume:/app/postgres_volume
-    expose:
+      - ./postgres_volume:/var/lib/postgresql/data
+    ports:
       - 5430:5432
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=CartMan1
-      - POSTGRES_DB=postgres_db
+      - POSTGRES_PASSWORD=postgres
+      - DB_NAME=postgres_db
+  volumes:
+    postgres_volume:
