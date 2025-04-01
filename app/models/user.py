@@ -1,43 +1,36 @@
 import bcrypt
 import os
+from sqlmodel import SQLModel, Field, Relationship, ForeignKey 
+from typing import Optional
+from datetime import datetime
 
-class User:
-  def __init__(self, user_id:int, email:str, password:str, nickname:str, balance:int=5):
-    self._email = email
-    self._user_id = user_id
-    self._password_hash = self._hash_password (password)
-    self._nickname = nickname
-    self._balance = balance
+class User (SQLModel, table=True):
+    User_id: int = Field (default = None, primary_key=True)
+    email:str
+    password: str
+    nickname: str
+    balance: int
+    transaction: Optional[str]
 
-  def _hash_password(self, password:str) -> bytes:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw (password.encode(),salt)
-  def check_password (self, password:str) -> bool:
-    return bcrypt.checkpw (password.encode(),self._password_hash)
-  
-  def __str__(self) -> str:
-    return f"id: {self._user_id}, email: {self._email}"
+    def say(self):
+        return "HI!"
 
-
-@property 
-def balance (self) -> int:
-  return self._balance
-
+class UserHistory(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field (foreign_key = ('user.user_id'))
+    action: str
+    timestamp: datetime 
+    details: str
 
 
-class Admin (User):
-  def __init__(self, user_id:int, nickname: str):
-    super().__init__(
-        user_id = user_id,
-        email = os.getenv ('ADMIN_EMAIL', 'admin@mail.ru'),
-        password = os.getenv ('ADMIN_PASSWORD', 'admin'),
-        nickname = nickname)
+class Admin (SQLModel, table=True):
+    Admin_id:int = Field(default=None, primary_key=True)
+    email:str
+    password: str
+    nickname: str
+
+
+    def say(self):
+        return "HI, Im admin!"
     
-  def recharge_balance (self, user:User, amount: int) -> None:
-    pass
-  def get_users (self):
-    pass
-
-class User_creation:
-  def create_users():
-   pass
+    

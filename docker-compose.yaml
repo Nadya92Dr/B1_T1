@@ -19,18 +19,18 @@ services:
       - 443:443
     depends_on:
       - app
-  rabbitmq:
-    image: rabbitmq:4.0.7
-    hostname: rabbitmq
-    restart: on-failure
-    environment:
-      - RABBITMQ_DEFAULT_USER=rmuser
-      - RABBITMQ_DEFAULT_PASS=rmpassword
-    ports:
-      - 15672:15672
-      - 5672:5672
-    volumes:
-      - rabbitmq_volume:/app/rabbitmq_volume
+  # rabbitmq:
+  #   image: rabbitmq:4.0.7
+  #   hostname: rabbitmq
+  #   restart: on-failure
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=rmuser
+  #     - RABBITMQ_DEFAULT_PASS=rmpassword
+  #   ports:
+  #     - 15672:15672
+  #     - 5672:5672
+  #   volumes:
+  #     - rabbitmq_volume:/var/lib/rabbitmq/data
   database:
     image: postgres:16-alpine
     volumes:
@@ -40,7 +40,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - DB_NAME=postgres_db
-  volumes:
-    postgres_volume:
-    rabbitmq_volume:
+      - POSTGRES_DB=postgres_db
+volumes:
+  postgres_volume:
+  rabbitmq_volume:
