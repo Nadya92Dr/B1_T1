@@ -1,4 +1,4 @@
-from models.llm import llm, prediction_task, transaction, history
+from models.llm import llm, prediction_task, transaction
 from models.user import user
 from typing import List, Optional
 

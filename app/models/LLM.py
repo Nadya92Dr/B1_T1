@@ -1,6 +1,6 @@
 from datetime import datetime
 from models.user import user
-from sqlmodel import SQLModel, Field, Relationship, ForeignKey 
+from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from enum import Enum
 
