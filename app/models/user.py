@@ -4,8 +4,8 @@ from sqlmodel import SQLModel, Field, Relationship, ForeignKey
 from typing import Optional
 from datetime import datetime
 
-class User (SQLModel, table=True):
-    User_id: int = Field (default = None, primary_key=True)
+class user (SQLModel, table=True):
+    user_id: int = Field (default = None, primary_key=True)
     email:str
     password: str
     nickname: str
@@ -15,7 +15,7 @@ class User (SQLModel, table=True):
     def say(self):
         return "HI!"
 
-class UserHistory(SQLModel, table=True):
+class user_history (SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field (foreign_key = ('user.user_id'))
     action: str
@@ -23,8 +23,8 @@ class UserHistory(SQLModel, table=True):
     details: str
 
 
-class Admin (SQLModel, table=True):
-    Admin_id:int = Field(default=None, primary_key=True)
+class admin (SQLModel, table=True):
+    admin_id:int = Field(default=None, primary_key=True)
     email:str
     password: str
     nickname: str

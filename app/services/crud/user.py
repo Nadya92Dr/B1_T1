@@ -1,36 +1,36 @@
 import bcrypt
 import os
-from models.user import User, Admin
-from models.LLM import LLM, History 
+from models.user import user, admin
+from models.llm import llm, history 
 from typing import List, Optional
 
-def get_all_users(session) -> List[User]:
-    return session.query(User).all()
+def get_all_users(session) -> List[user]:
+    return session.query(user).all()
 
-def get_user_by_id(user_id:int, session) -> Optional[User]:
-    users = session.get(User, user_id) 
+def get_user_by_id(user_id:int, session) -> Optional[user]:
+    users = session.get(user, user_id) 
     if users:
         return users 
     return None
 
-def get_user_by_email(email:str, session) -> Optional[User]:
-    user = session.query(User).filter(User.email == email).first()
+def get_user_by_email(email:str, session) -> Optional[user]:
+    user = session.query(user).filter(user.email == email).first()
     if user:
         return user 
     return None
 
 def get_user_history(user_id: int, session):
     return (
-        session.query(History)
-        .filter(History.User_id == user_id)
-        .order_by(History.created_at.desc())
+        session.query(history)
+        .filter(history.user_id == user_id)
+        .order_by(history.created_at.desc())
         .all()
     )
 
-def check_balance(user: User, balance: int) -> bool:
+def check_balance(user: user, balance: int) -> bool:
     return user.balance >= balance
 
-def create_user(new_user: User, session) -> User:
+def create_user(new_user: user, session) -> user:
     session.add(new_user) 
     session.commit() 
     session.refresh(new_user)
@@ -42,16 +42,16 @@ def create_user(new_user: User, session) -> User:
     def check_password (self, password:str) -> bool:
          return bcrypt.checkpw (password.encode(),self._password_hash)
 
-def auth_user(email: str, password: str, session) -> Optional[User]:
+def auth_user(email: str, password: str, session) -> Optional[user]:
     user = get_user_by_email(email, session)
     if not user or not bcrypt.checkpw(password.encode(), user.password.encode()):
         return None
     return user
 
 
-def recharge_balance(admin: Admin, user_id: int, amount: int, session) -> Optional[User]:
+def recharge_balance(admin: admin, user_id: int, amount: int, session) -> Optional[user]:
     
-    db_admin = session.get (Admin, admin.Admin_id)
+    db_admin = session.get (admin, admin.admin_id)
     if not db_admin:
         raise ValueError ("Только администратор может пополнять баланс")
     
