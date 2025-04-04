@@ -1,17 +1,28 @@
 from datetime import datetime
-from models.user import user
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from enum import Enum
+from models.user import User
 
 class task_status(str, Enum):
   PENDING = "pending"
   COMPLETED = "completed"
   FAILED = "failed"
 
+class llm (SQLModel, table=True):
+  
+    llm_id: int = Field (default = None, primary_key=True)
+    title: str
+    description: str
+    creator: Optional[str] = None
+    cost_per_request: int
+
+    tasks: list ["prediction_task"] = Relationship (back_populates="llm")
+
+
 class prediction_task (SQLModel, table = True):
 
-    task_id: int = Field (default = None, primary_key=True)
+    prediction_task_id: int = Field (default = None, primary_key=True)
     llm_id: int = Field (foreign_key = ("llm.llm_id"))
     user_id: int = Field (foreign_key = ("user.user_id"))
     input_data: str
@@ -20,8 +31,8 @@ class prediction_task (SQLModel, table = True):
     result: Optional [str] =None
     status: str = 'pending'
 
-    llm: Optional [llm] = Relationship (back_populates="tasks")
-    user: Optional [user] = Relationship (back_populates="tasks")
+    llm: Optional ["llm"] = Relationship (back_populates="tasks")
+    user: Optional ["User"] = Relationship (back_populates="tasks")
 
 
 class transaction (SQLModel, table = True):
@@ -31,7 +42,7 @@ class transaction (SQLModel, table = True):
     amount: int
     description: str
     created_at: datetime = Field (default_factory=datetime.utcnow)
-    related_task_id: int = Field (foreign_key = ("prediction_task.task_id"))
+    related_task_id: int = Field (foreign_key = ("prediction_task.prediction_task_id"))
     status:str = 'completed'
 
     def do_transaction ():
@@ -46,13 +57,5 @@ class history (SQLModel, table = True):
     created_at: datetime = Field (default_factory=datetime.utcnow)
 
 
-class llm (SQLModel, table=True):
-  
-    llm_id: int = Field (default = None, primary_key=True)
-    title: str
-    description: str
-    creator: Optional[str] = None
-    cost_per_request: int
 
-    tasks: list [prediction_task] = Relationship (back_populates="llm")
 

@@ -4,18 +4,21 @@ from sqlmodel import SQLModel, Field, Relationship, ForeignKey
 from typing import Optional
 from datetime import datetime
 
-class user (SQLModel, table=True):
+class User (SQLModel, table=True):
     user_id: int = Field (default = None, primary_key=True)
     email:str
     password: str
     nickname: str
     balance: int
-    transaction: Optional[str]
+    transaction: Optional[str] = None
+
+    tasks: list ["models.llm.prediction_task"] = Relationship (back_populates="user")
+
 
     def say(self):
         return "HI!"
 
-class user_history (SQLModel, table=True):
+class User_history (SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field (foreign_key = ('user.user_id'))
     action: str
@@ -23,7 +26,7 @@ class user_history (SQLModel, table=True):
     details: str
 
 
-class admin (SQLModel, table=True):
+class Admin (SQLModel, table=True):
     admin_id:int = Field(default=None, primary_key=True)
     email:str
     password: str

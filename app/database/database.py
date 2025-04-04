@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Session, create_engine, text
 from contextlib import contextmanager
 from .config import get_settings
 from services.crud.user import get_all_users, create_user
-from models.user import user, admin, user_history 
+from models.user import User, Admin, User_history 
 from datetime import datetime
 
 engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
@@ -23,8 +23,8 @@ def init_database():
     # SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
-    demo_user = user (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)
-    demo_admin = admin (admin_id = 1, email = "admin@email.ru", password = "pass",nickname = "admin")
+    demo_user = User (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)
+    demo_admin = Admin (admin_id = 1, email = "admin@email.ru", password = "pass",nickname = "admin")
     
     with Session(engine) as session:
 
