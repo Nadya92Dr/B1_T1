@@ -8,7 +8,7 @@ import uvicorn
 app = FastAPI()
 app.include_router(home_router, tags=['home'])
 app.include_router(user_route, prefix='/user')
-app.include_router(prediction_task_router, prefix='/prediction', tags=['predictions'])
+app.include_router(prediction_task_router, prefix='/prediction', tags=['prediction_tasks'])
 
 @app.on_event("startup") 
 def on_startup():

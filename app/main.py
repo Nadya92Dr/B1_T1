@@ -27,9 +27,9 @@ if __name__ == '__main__':
     init_database()
     print ("Init db has been success")
 
-    test_user = user (user_id = 2, email = "test1@email.ru", password = "test", nickname = "u1", balance = 5)
-    test_user_2 = user (user_id = 3, email = "test2@email.ru", password = "test",nickname = "u2", balance = 5)
-    test_user_3 = user (user_id = 4, email = "test3@email.ru", password = "test",nickname = "u3", balance = 5)
+    test_user = user (user_id = 3, email = "test1@email.ru", password = "test", nickname = "u1", balance = 5)
+    test_user_2 = user (user_id = 4, email = "test2@email.ru", password = "test",nickname = "u2", balance = 5)
+    test_user_3 = user (user_id = 5, email = "test3@email.ru", password = "test",nickname = "u3", balance = 5)
 
     demo_llm = llm(
                 title="LLM", 

@@ -6,7 +6,7 @@ from datetime import datetime
 
 class User (SQLModel, table=True):
     user_id: int = Field (default = None, primary_key=True)
-    email:str
+    email:str = Field (unique=True)
     password: str
     nickname: str
     balance: int

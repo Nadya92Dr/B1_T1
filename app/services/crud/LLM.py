@@ -1,5 +1,5 @@
 from models.llm import llm, prediction_task, transaction
-from models.user import user
+from models.user import User
 from typing import List, Optional
 
 
@@ -34,35 +34,45 @@ def delete_predictions_by_id(task_id:int, session) -> None:
 
 
 
-def run_llm (user: user, llm_id: int, input_data: dict, session) -> dict:
-    if user.balance <= 0:
+def run_llm (user: User, llm_id: int, input_data: dict, session):
+    llm_model = session.get (llm, llm_id)
+    # if not llm_model:
+    #     raise ValueError ("LLM model not found")
+    if user.balance < llm_model.cost_per_request:
      raise ValueError("Недостаточно средств на балансе")
-    
-    
-    new_task = prediction_task(
-          llm_id=llm.llm_id,
-          user_id=user.user_id,
-          cost=llm.cost,
-          input_data=str,
-          status="в обработке"
-      )
-    
+    user.balance -= llm_model.cost_per_request
+
+    new_task = prediction_task (
+        llm = llm_model.llm_id,
+        user_id = user.user_id,
+        input_data = str (input_data),
+        cost = llm_model.cost_per_request,
+        status = "в обработке"
+    )
+
     new_transaction = transaction(
           user_id=user.user_id,
-          amount=transaction.amount,
+          amount=llm.cost_per_request,
           description=f"LLM запрос {llm_id}",
           related_task_id=new_task.task_id
       )
-      
     session.add_all([new_task, new_transaction])
+    user.balance -= llm_model.cost_per_request
     session.commit()
+    return new_task 
+
+    # try:
+    #     result = run_llm (llm_id, input_data)
+    #     new_task.status = "завершено"
+    #     new_task.result = str(result)
+    # except Exception as e:
+    #     new_task.status = "failed"
     
-    try:
-        result = run_llm (llm_id, input_data)
-        new_task.status = "завершено"
-        new_task.result = str(result)
-    except Exception as e:
-        new_task.status = "failed"
-      
-    session.commit()
-    return new_task
+    
+
+    
+
+
+
+    
+    

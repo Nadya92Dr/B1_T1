@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends
 from database.database import get_session
 from models.llm import llm, prediction_task 
+from models.user import User
+from services.crud import llm as LlmService
 from typing import List
 
 prediction_task_router = APIRouter(tags=["prediction_tasks"])
@@ -21,6 +23,21 @@ async def retrieve_predictions(id: int) -> prediction_task:
 async def create_prediction_task(body: prediction_task = Body(...)) -> dict: 
     prediction_tasks.append(body)
     return {"message": "Prediction_task created successfully"}
+
+
+
+@prediction_task_router.post("/predict")
+async def create_prediction(
+    input_data: dict,
+    llm_id: int,
+    user: User = Depends(get_session),
+    session=Depends(get_session)
+):
+    try:
+        result = LlmService.run_llm(user, llm_id, input_data, session)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @prediction_task_router.delete("/{id}")
 async def delete_prediction_task(id: int) -> dict: 

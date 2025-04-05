@@ -20,16 +20,18 @@ def init_database():
         except Exception as e:
             print(f"Database already exists: {e}")
 
-    # SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
     demo_user = User (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)
-    demo_admin = Admin (admin_id = 1, email = "admin@email.ru", password = "pass",nickname = "admin")
+    demo_admin = Admin (admin_id = 2, email = "admin@email.ru", password = "pass",nickname = "admin")
     
     with Session(engine) as session:
 
         create_user(demo_user, session) 
         create_user(demo_admin, session)
-
+        session.add (demo_admin)
+        
         session.commit()  
+        session.refresh (demo_admin)
 

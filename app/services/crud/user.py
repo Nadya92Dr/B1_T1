@@ -7,6 +7,9 @@ from typing import List, Optional
 def get_all_users(session) -> List[User]:
     return session.query(User).all()
 
+def get_admins (session) -> List[Admin]:
+    return session.query (Admin).all ()
+
 def get_user_by_id(user_id:int, session) -> Optional[User]:
     users = session.get(User, user_id) 
     if users:
