@@ -9,11 +9,20 @@ from typing import List
 
 user_route = APIRouter(tags=['User'])
 
-def get_current_user(user_id :int, session=Depends(get_session)
-) -> dict:
-    current_user = UserService.get_user_by_id(user_id, session)
-    return current_user
+async def get_current_user(session=Depends(get_session)) -> User:
     
+    user_id = int  
+    user = UserService.get_user_by_id(user_id, session)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+# def get_current_user(session=Depends(get_session)
+# ) -> dict:
+#     current_user = UserService.get_user_by_id(user_id, session)
+#     return current_user
+
+   
 
 @user_route.post('/signup')
 async def signup(data: User, session=Depends(get_session)) -> dict:
@@ -57,18 +66,18 @@ async def get_admins(session=Depends(get_session)) -> list:
 
 
 @user_route.get("/balance")
-async def get_balance(data: User = Depends(get_current_user)):
+async def get_balance(data: User = UserService.get_user_by_id, session = Depends (get_session)):
     return {"balance": get_balance.balance}
 
 @user_route.get("/history")
-async def get_history(data: User = Depends(get_current_user), session = Depends (get_session)):
+async def get_history(data: User = UserService.get_user_by_id, session = Depends (get_session)):
     return UserService.get_user_history(User.user_id, session)
 
 @user_route.post("/recharge")
 async def recharge_balance(
     user_id: int,
     amount: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = UserService.get_user_by_id,
     session=Depends(get_session)
 ):
     admin = session.query(Admin).filter(Admin.admin_id == current_user.user_id).first()

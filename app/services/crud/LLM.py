@@ -1,5 +1,7 @@
 from models.llm import llm, prediction_task, transaction
 from models.user import User
+from services.crud import user as UserService
+
 from typing import List, Optional
 
 
@@ -32,29 +34,34 @@ def delete_predictions_by_id(task_id:int, session) -> None:
         
     raise Exception("PredictionTask with supplied ID does not exist")
 
+def create_llm (new_llm: llm, session) -> llm:
+    session.add(new_llm) 
+    session.commit() 
+    session.refresh(new_llm)
+    return new_llm
 
-
-def run_llm (user: User, llm_id: int, input_data: dict, session):
+def run_llm (user_id:int, llm_id: int, input_data: dict, session):
+    user = session.get(User, user_id)
     llm_model = session.get (llm, llm_id)
-    # if not llm_model:
-    #     raise ValueError ("LLM model not found")
+    if not llm_model:
+        raise ValueError ("LLM model not found")
     if user.balance < llm_model.cost_per_request:
      raise ValueError("Недостаточно средств на балансе")
     user.balance -= llm_model.cost_per_request
 
     new_task = prediction_task (
-        llm = llm_model.llm_id,
+        llm_id = llm_model.llm_id,
         user_id = user.user_id,
         input_data = str (input_data),
         cost = llm_model.cost_per_request,
-        status = "в обработке"
+        status = "pending"
     )
 
     new_transaction = transaction(
           user_id=user.user_id,
-          amount=llm.cost_per_request,
+          amount=llm_model.cost_per_request,
           description=f"LLM запрос {llm_id}",
-          related_task_id=new_task.task_id
+          related_task_id=new_task.prediction_task_id
       )
     session.add_all([new_task, new_transaction])
     user.balance -= llm_model.cost_per_request

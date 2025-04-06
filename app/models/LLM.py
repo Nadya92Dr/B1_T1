@@ -11,7 +11,7 @@ class task_status(str, Enum):
 
 class llm (SQLModel, table=True):
   
-    llm_id: int = Field (default = None, primary_key=True)
+    llm_id: int = Field (default = 1, primary_key=True)
     title: str
     description: str
     creator: Optional[str] = None

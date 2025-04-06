@@ -3,6 +3,8 @@ from contextlib import contextmanager
 from .config import get_settings
 from services.crud.user import get_all_users, create_user
 from models.user import User, Admin, User_history 
+from models.llm import llm
+from services.crud.llm import create_llm
 from datetime import datetime
 
 engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
@@ -25,11 +27,15 @@ def init_database():
 
     demo_user = User (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)
     demo_admin = Admin (admin_id = 2, email = "admin@email.ru", password = "pass",nickname = "admin")
-    
+    demo_llm = llm (llm_id = 1, title = "демо ллм", description = "описание", cost_per_request = 3)
+
+
+
     with Session(engine) as session:
 
         create_user(demo_user, session) 
         create_user(demo_admin, session)
+        create_llm (demo_llm, session)
         session.add (demo_admin)
         
         session.commit()  

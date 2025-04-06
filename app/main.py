@@ -2,6 +2,7 @@ from database.config import get_settings
 from database.database import get_session, init_database, engine
 from sqlmodel import SQLModel, Session
 from services.crud.user import get_all_users, create_user
+from services.crud.llm import create_llm
 from datetime import datetime
 
 from models.user import user
@@ -69,6 +70,7 @@ if __name__ == '__main__':
         print (user.say ())
 
     with Session (engine) as session:
+        create_llm (demo_llm, session)
         session.add(demo_llm)
         session.add_all([demo_task, demo_transaction])
         session.commit()

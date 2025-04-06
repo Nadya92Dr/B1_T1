@@ -3,6 +3,8 @@ from database.database import get_session
 from models.llm import llm, prediction_task 
 from models.user import User
 from services.crud import llm as LlmService
+from services.crud import user as UserService
+from routes.user import get_current_user
 from typing import List
 
 prediction_task_router = APIRouter(tags=["prediction_tasks"])
@@ -28,11 +30,14 @@ async def create_prediction_task(body: prediction_task = Body(...)) -> dict:
 
 @prediction_task_router.post("/predict")
 async def create_prediction(
-    input_data: dict,
+    input_data: str,
     llm_id: int,
-    user: User = Depends(get_session),
+    user_id:int,
     session=Depends(get_session)
 ):
+    user = UserService.get_user_by_id (user_id, session)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     try:
         result = LlmService.run_llm(user, llm_id, input_data, session)
         return result
