@@ -47,7 +47,7 @@ def run_llm (user_id:int, llm_id: int, input_data: dict, session):
         raise ValueError ("LLM model not found")
     if user.balance < llm_model.cost_per_request:
      raise ValueError("Недостаточно средств на балансе")
-    user.balance -= llm_model.cost_per_request
+    
 
     new_task = prediction_task (
         llm_id = llm_model.llm_id,
@@ -56,15 +56,20 @@ def run_llm (user_id:int, llm_id: int, input_data: dict, session):
         cost = llm_model.cost_per_request,
         status = "pending"
     )
+    session.add(new_task)
+    session.flush()
 
     new_transaction = transaction(
           user_id=user.user_id,
           amount=llm_model.cost_per_request,
           description=f"LLM запрос {llm_id}",
-          related_task_id=new_task.prediction_task_id
+          related_task_id=new_task.prediction_task_id,
+          status = "completed"
       )
-    session.add_all([new_task, new_transaction])
+    
     user.balance -= llm_model.cost_per_request
+
+    session.add (new_transaction)
     session.commit()
     return new_task 
 

@@ -1,6 +1,6 @@
 import bcrypt
 import os
-from models.user import User, Admin
+from models.user import User, Admin, User_history
 from models.llm import llm, history 
 from typing import List, Optional
 
@@ -24,9 +24,9 @@ def get_user_by_email(email:str, session) -> Optional[User]:
 
 def get_user_history(user_id: int, session):
     return (
-        session.query(history)
-        .filter(history.user_id == user_id)
-        .order_by(history.created_at.desc())
+        session.query(User_history)
+        .filter(User_history.user_id == user_id)
+        .order_by(User_history.timestamp.desc())
         .all()
     )
 

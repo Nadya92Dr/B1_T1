@@ -20,7 +20,7 @@ class User (SQLModel, table=True):
 
 class User_history (SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field (foreign_key = ('user.user_id'))
+    user_id: int = Field (foreign_key = "user.user_id")
     action: str
     timestamp: datetime 
     details: str

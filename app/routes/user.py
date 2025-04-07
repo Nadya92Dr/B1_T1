@@ -66,21 +66,28 @@ async def get_admins(session=Depends(get_session)) -> list:
 
 
 @user_route.get("/balance")
-async def get_balance(data: User = UserService.get_user_by_id, session = Depends (get_session)):
-    return {"balance": get_balance.balance}
+async def get_balance(user_id: int, session = Depends (get_session)):
+    user = UserService.get_user_by_id(user_id, session)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"balance": user.balance}
 
 @user_route.get("/history")
-async def get_history(data: User = UserService.get_user_by_id, session = Depends (get_session)):
-    return UserService.get_user_history(User.user_id, session)
+async def get_history(user_id: int, session = Depends (get_session)):
+    user = UserService.get_user_by_id(user_id, session)
+    if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+    user_history = UserService.get_user_history(user_id, session)
+    return {"history": user_history}
 
 @user_route.post("/recharge")
 async def recharge_balance(
     user_id: int,
     amount: int,
-    current_user: User = UserService.get_user_by_id,
+    admin_id:int,
     session=Depends(get_session)
 ):
-    admin = session.query(Admin).filter(Admin.admin_id == current_user.user_id).first()
+    admin = session.query(Admin).filter(Admin.admin_id == admin_id).first()
     if not admin:
         raise HTTPException(status_code=403, detail="Forbidden")
     

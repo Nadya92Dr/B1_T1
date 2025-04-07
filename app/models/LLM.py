@@ -43,7 +43,7 @@ class transaction (SQLModel, table = True):
     description: str
     created_at: datetime = Field (default_factory=datetime.utcnow)
     related_task_id: int = Field (foreign_key = ("prediction_task.prediction_task_id"))
-    status:str = 'completed'
+    status:str = Field (default = 'completed')
 
     def do_transaction ():
       pass

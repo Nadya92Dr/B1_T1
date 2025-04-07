@@ -39,7 +39,7 @@ async def create_prediction(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     try:
-        result = LlmService.run_llm(user, llm_id, input_data, session)
+        result = LlmService.run_llm(user_id, llm_id, input_data, session)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
