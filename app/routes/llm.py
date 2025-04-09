@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Body, HTTPException, status, Depends
-from database.database import get_session
-from models.llm import llm, prediction_task 
+from fastapi import APIRouter, Body, HTTPException, status, Depends, BackgroundTasks
+from database.database import session, get_session
+from models.llm import llm, prediction_task, prediction_request
 from models.user import User
 from services.crud import llm as LlmService
 from services.crud import user as UserService
@@ -19,7 +19,18 @@ async def retrieve_predictions(id: int) -> prediction_task:
     for task in prediction_tasks: 
         if task.prediction_task_id == id:
             return task
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task with supplied ID does not exist")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                        detail="Task with supplied ID does not exist")
+
+@prediction_task_router.get("/status/{task_id}")
+async def get_task_status(task_id: int, session=Depends(get_session)):
+    task = session.get(prediction_task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {
+        "status": task.status,
+        "result": task.result
+    }
 
 @prediction_task_router.post("/new")
 async def create_prediction_task(body: prediction_task = Body(...)) -> dict: 
@@ -30,17 +41,25 @@ async def create_prediction_task(body: prediction_task = Body(...)) -> dict:
 
 @prediction_task_router.post("/predict")
 async def create_prediction(
-    input_data: str,
     llm_id: int,
-    user_id:int,
-    session=Depends(get_session)
+    user_id: int,
+    request: prediction_request = Body(...),
+    background_tasks: BackgroundTasks,
+    session: session = Depends(get_session)
 ):
+    
     user = UserService.get_user_by_id (user_id, session)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
     try:
-        result = LlmService.run_llm(user_id, llm_id, input_data, session)
-        return result
+        task = LlmService.run_llm(user_id,
+         llm_id, 
+          {"image_url": request.image_url, "text": request.text},
+            session,
+            background_tasks)
+        return {"task_id": task.prediction_task_id, "status": "processing"}
+    
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

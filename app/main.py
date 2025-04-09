@@ -3,7 +3,9 @@ from database.database import get_session, init_database, engine
 from sqlmodel import SQLModel, Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm
+from services.crud.llm_inference import llm_service
 from datetime import datetime
+
 
 from models.user import user
 from fastapi import FastAPI
@@ -17,6 +19,11 @@ app = FastAPI()
 def index():
     nickname = user (1, 'Nadya@gmail.com')
     return "HI" + nickname
+
+@app.on_event ("startup")
+async def startup_event ():
+    llm_service.load_model()
+
 
 if __name__ == '__main__':
 

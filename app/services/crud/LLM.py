@@ -1,8 +1,37 @@
 from models.llm import llm, prediction_task, transaction
 from models.user import User
 from services.crud import user as UserService
+from services.crud.llm_inference import llm_service
+from models.llm import task_status
+from fastapi import BackgroundTasks
 
 from typing import List, Optional
+
+
+def process_task_async(task_id: int, input_data: dict, session):
+    with session.begin():
+        task = session.get(prediction_task, task_id)
+        user = session.get (User, task.user_id)
+
+        try:
+            result = llm_service.process_request(input_data)
+            user.balance -= task.cost
+            task.result = result
+            task.status = task_status.COMPLETED.value
+
+            transaction = Transaction(
+                user_id=user.user_id,
+                amount=-task.cost,
+                description=f"LLM request {task.llm_id}",
+                related_task_id=task.prediction_task_id,
+                status="completed"
+            )
+            session.add(transaction)
+            
+        except Exception as e:
+            task.status = task_status.FAILED.value
+            task.result = str(e)
+        session.commit()
 
 
 def get_all_transactions(session) -> List[transaction]:
@@ -40,7 +69,7 @@ def create_llm (new_llm: llm, session) -> llm:
     session.refresh(new_llm)
     return new_llm
 
-def run_llm (user_id:int, llm_id: int, input_data: dict, session):
+def run_llm (user_id:int, llm_id: int, input_data: dict, session,  background_tasks: BackgroundTasks):
     user = session.get(User, user_id)
     llm_model = session.get (llm, llm_id)
     if not llm_model:
@@ -54,10 +83,13 @@ def run_llm (user_id:int, llm_id: int, input_data: dict, session):
         user_id = user.user_id,
         input_data = str (input_data),
         cost = llm_model.cost_per_request,
-        status = "pending"
+        status = task_status.PENDING.value
     )
     session.add(new_task)
     session.flush()
+
+    background_tasks.add_task(process_task_async, 
+    new_task.prediction_task_id, input_data, session)
 
     new_transaction = transaction(
           user_id=user.user_id,
@@ -73,12 +105,6 @@ def run_llm (user_id:int, llm_id: int, input_data: dict, session):
     session.commit()
     return new_task 
 
-    # try:
-    #     result = run_llm (llm_id, input_data)
-    #     new_task.status = "завершено"
-    #     new_task.result = str(result)
-    # except Exception as e:
-    #     new_task.status = "failed"
     
     
 

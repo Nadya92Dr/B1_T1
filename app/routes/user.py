@@ -48,11 +48,11 @@ async def signin(data: User, session=Depends(get_session)) -> dict:
 
 
 
-@user_route.get('/get_all_users', response_model=List[User])
+@user_route.get('/users', response_model=List[User])
 async def get_all_users(session=Depends(get_session)) -> list:
     return UserService.get_all_users(session)
 
-@user_route.get('/get_admins', response_model=List[Admin])
+@user_route.get('/admins', response_model=List[Admin])
 async def get_admins(session=Depends(get_session)) -> list:
     return UserService.get_admins(session)
 
