@@ -1,15 +1,14 @@
 from database.config import get_settings
-from database.database import get_session, init_database, engine
-from sqlmodel import SQLModel, Session
+from database.database import get_session, init_database, engine, SessionLocal
+from sqlmodel import Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm
 from services.crud.llm_inference import llm_service
 from datetime import datetime
-
-
 from models.user import user
 from fastapi import FastAPI
 import uvicorn
+import json
 from models.llm import llm, prediction_task, transaction, history, task_status
 
 

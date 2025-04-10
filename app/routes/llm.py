@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends, BackgroundTasks
-from database.database import session, get_session
+from database.database import Session, get_session
 from models.llm import llm, prediction_task, prediction_request
 from models.user import User
 from services.crud import llm as LlmService
@@ -43,9 +43,9 @@ async def create_prediction_task(body: prediction_task = Body(...)) -> dict:
 async def create_prediction(
     llm_id: int,
     user_id: int,
-    request: prediction_request = Body(...),
+    request: prediction_request,
     background_tasks: BackgroundTasks,
-    session: session = Depends(get_session)
+    session: Session = Depends(get_session)
 ):
     
     user = UserService.get_user_by_id (user_id, session)
@@ -53,11 +53,13 @@ async def create_prediction(
         raise HTTPException(status_code=404, detail="User not found")
     
     try:
-        task = LlmService.run_llm(user_id,
+        task = LlmService.run_llm(
+         user_id,
          llm_id, 
-          {"image_url": request.image_url, "text": request.text},
-            session,
-            background_tasks)
+         request.text,
+         session,
+         background_tasks
+         )
         return {"task_id": task.prediction_task_id, "status": "processing"}
     
     except ValueError as e:

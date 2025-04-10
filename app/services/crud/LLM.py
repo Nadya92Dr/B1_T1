@@ -4,11 +4,12 @@ from services.crud import user as UserService
 from services.crud.llm_inference import llm_service
 from models.llm import task_status
 from fastapi import BackgroundTasks
+from services.rm.rm import send_task
 
 from typing import List, Optional
 
 
-def process_task_async(task_id: int, input_data: dict, session):
+def process_task_async(task_id: int, input_data: str, session):
     with session.begin():
         task = session.get(prediction_task, task_id)
         user = session.get (User, task.user_id)
@@ -19,7 +20,7 @@ def process_task_async(task_id: int, input_data: dict, session):
             task.result = result
             task.status = task_status.COMPLETED.value
 
-            transaction = Transaction(
+            transaction = transaction(
                 user_id=user.user_id,
                 amount=-task.cost,
                 description=f"LLM request {task.llm_id}",
@@ -69,7 +70,7 @@ def create_llm (new_llm: llm, session) -> llm:
     session.refresh(new_llm)
     return new_llm
 
-def run_llm (user_id:int, llm_id: int, input_data: dict, session,  background_tasks: BackgroundTasks):
+def run_llm (user_id:int, llm_id: int, input_data: str, session,  background_tasks):
     user = session.get(User, user_id)
     llm_model = session.get (llm, llm_id)
     if not llm_model:
@@ -81,12 +82,18 @@ def run_llm (user_id:int, llm_id: int, input_data: dict, session,  background_ta
     new_task = prediction_task (
         llm_id = llm_model.llm_id,
         user_id = user.user_id,
-        input_data = str (input_data),
+        input_data = input_data,
         cost = llm_model.cost_per_request,
         status = task_status.PENDING.value
     )
     session.add(new_task)
     session.flush()
+
+    task_data = {
+        'task_id': new_task.prediction_task_id,
+        'input_data': input_data
+    }
+    send_task(task_data)
 
     background_tasks.add_task(process_task_async, 
     new_task.prediction_task_id, input_data, session)

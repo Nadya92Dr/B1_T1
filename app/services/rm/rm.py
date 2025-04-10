@@ -1,5 +1,5 @@
 import pika
-
+import json
 
 connection_params = pika.ConnectionParameters(
     host='rabbitmq',  
@@ -13,21 +13,14 @@ connection_params = pika.ConnectionParameters(
     blocked_connection_timeout=2
 )
 
-def send_task(message:str):
+def send_task(task_data:dict):
     connection = pika.BlockingConnection(connection_params)
     channel = connection.channel()
     
-   
-    queue_name = 'ml_task_queue'
-
-   
-    channel.queue_declare(queue=queue_name)  
-
+    channel.queue_declare(queue='ml_task_queue')  
     channel.basic_publish(
         exchange='',
-        routing_key=queue_name,
-        body=message
+        routing_key='ml_task_queue',
+        body=json.dumps(task_data).encode('utf-8')
     )
-
-  
     connection.close()

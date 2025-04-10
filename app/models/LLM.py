@@ -1,62 +1,41 @@
 from datetime import datetime
 from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship
-from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
-from qwen_vl_utils import process_vision_info
-import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Optional
 from enum import Enum
 from models.user import User
 
-model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "Qwen/Qwen2-VL-2B-Instruct",
-    torch_dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",
-    device_map="auto",
+model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
 )
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-min_pixels = 256*28*28
-max_pixels = 1280*28*28
-processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", 
-min_pixels=min_pixels, max_pixels=max_pixels)
-
+prompt = "Give me a short introduction to large language model."
 messages = [
-    {
-        "role": "user",
-        "content": [
-            {
-                "type": "image",
-                "image": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg",
-            },
-            {"type": "text", "text": "Describe this image."},
-        ],
-    }
+    {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+    {"role": "user", "content": prompt}
+]
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+
+generated_ids = model.generate(
+    **model_inputs,
+    max_new_tokens=512
+)
+generated_ids = [
+    output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
 ]
 
-text = processor.apply_chat_template(
-    messages, tokenize=False, add_generation_prompt=True
-)
-image_inputs, video_inputs = process_vision_info(messages)
-inputs = processor(
-    text=[text],
-    images=image_inputs,
-    videos=video_inputs,
-    padding=True,
-    return_tensors="pt",
-)
-inputs = inputs.to("cuda")
-
-generated_ids = model.generate(**inputs, max_new_tokens=128)
-generated_ids_trimmed = [
-    out_ids[len(in_ids) :] 
-    for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-]
-output_text = processor.batch_decode(
-    generated_ids_trimmed, 
-    skip_special_tokens=True, 
-    clean_up_tokenization_spaces=False
-)
-print(output_text)
+response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
 class task_status(str, Enum):
   PENDING = "pending"
@@ -89,7 +68,6 @@ class prediction_task (SQLModel, table = True):
     user: Optional ["User"] = Relationship (back_populates="tasks")
 
 class prediction_request(BaseModel):
-    image_url: str
     text: str
 
 class transaction (SQLModel, table = True):
