@@ -1,8 +1,8 @@
 import pika
 import time
 import logging
-from sqlmodel import create_engine, Session
-from app.database.database import SessionLocal
+# from sqlmodel import create_engine, Session
+from database.database import SessionLocal
 from app.models.llm import prediction_task, task_status
 
 logging.basicConfig(
@@ -24,13 +24,6 @@ connection_params = pika.ConnectionParameters(
     heartbeat=30,
     blocked_connection_timeout=2
 )
-
-
-DATABASE_URL = "postgresql+asyncpg://postgress:postgres@database:5432/postgres_db"
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = Session(autocommit=False, autoflush=False, bind=engine)
-
 
 connection = pika.BlockingConnection(connection_params)
 channel = connection.channel()

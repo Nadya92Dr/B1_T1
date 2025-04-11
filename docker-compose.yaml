@@ -61,7 +61,7 @@ services:
       - POSTGRES_DB=postgres_db
   ml_worker1:
     build:
-      context: ./ml_worker/
+      context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
@@ -70,6 +70,7 @@ services:
       - ./ml_worker/.env
     volumes:
       - ./ml_worker:/app
+      - ./app:/app
     depends_on:
       - database
       - rabbitmq
@@ -77,7 +78,7 @@ services:
       - llm-sport-network
   ml_worker2:
     build:
-      context: ./ml_worker/
+      context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
@@ -86,6 +87,7 @@ services:
       - ./ml_worker/.env
     volumes:
       - ./ml_worker:/app
+      - ./app:/app
     depends_on:
       - database
       - rabbitmq
