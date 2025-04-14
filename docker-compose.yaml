@@ -61,7 +61,7 @@ services:
       - POSTGRES_DB=postgres_db
   ml_worker1:
     build:
-      context: .
+      context: ./ml_worker/
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
@@ -78,7 +78,7 @@ services:
       - llm-sport-network
   ml_worker2:
     build:
-      context: .
+      context: ./ml_worker/
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:

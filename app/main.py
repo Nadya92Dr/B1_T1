@@ -1,5 +1,5 @@
 from database.config import get_settings
-from app.database.database import get_session, init_database, engine, SessionLocal
+from database.database import get_session, init_database, engine, SessionLocal
 from sqlmodel import Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm

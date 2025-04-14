@@ -3,7 +3,7 @@ import time
 import logging
 # from sqlmodel import create_engine, Session
 from database.database import SessionLocal
-from app.models.llm import prediction_task, task_status
+from models.llm import prediction_task, task_status
 
 logging.basicConfig(
     level=logging.DEBUG,
