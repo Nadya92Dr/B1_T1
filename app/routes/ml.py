@@ -44,7 +44,7 @@ async def send_task_endpoint(
 
     send_task({
         "task_id": db_task.prediction_task_id,
-        "input_data": request.message
+        "input_data": request.text
     })
 
     return {

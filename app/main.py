@@ -7,12 +7,14 @@ from services.crud.llm_inference import llm_service
 from datetime import datetime
 from models.user import User
 from fastapi import FastAPI
+from routes.ml import ml_route
 import uvicorn
 import json
 from models.llm import llm, prediction_task, transaction, history, task_status
 
 
 app = FastAPI()
+app.include_router(ml_route)
 
 @app.get('/')
 def index():
