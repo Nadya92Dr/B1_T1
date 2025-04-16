@@ -18,14 +18,16 @@ services:
       timeout: 20s
       retries: 3
       start_period: 30s
+    networks:
+      - llm-sport-network
   rabbitmq:
-    image: rabbitmq:4.0.7
+    image: rabbitmq:4.0.9-management-alpine
     hostname: rabbitmq
     restart: on-failure
     environment:
       - RABBITMQ_DEFAULT_USER=rmuser
       - RABBITMQ_DEFAULT_PASS=rmpassword
-      - RABBITMQ_SERVER_ADDITIOONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
     volumes:
       - rabbitmq_volume:/var/lib/rabbitmq/data
     ports:
@@ -48,6 +50,8 @@ services:
         condition: service_healthy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - llm-sport-network
 
   database:
     image: postgres:16-alpine
@@ -59,6 +63,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres_db
+    networks:
+      - llm-sport-network
   ml_worker1:
     build:
       context: ./ml_worker/

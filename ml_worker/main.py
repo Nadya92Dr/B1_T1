@@ -2,8 +2,10 @@ import pika
 import time
 import logging
 # from sqlmodel import create_engine, Session
-from database.database import SessionLocal
+from database.database import Session
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from models.llm import prediction_task, task_status
+
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -30,30 +32,89 @@ channel = connection.channel()
 queue_name = 'ml_task_queue'
 channel.queue_declare(queue=queue_name) 
 
+model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+prompt = "Give me a short introduction to large language model."
+messages = [
+    {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+    {"role": "user", "content": prompt}
+]
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+
+generated_ids = model.generate(
+    **model_inputs,
+    max_new_tokens=512
+)
+generated_ids = [
+    output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+]
+
+response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+
 
 
 def callback(ch, method, properties, body):
-    session = SessionLocal()
+    session = Session()
+    task = None
     try:
         data = json.loads(body)
         task_id = data['task_id']
         input_data = data['input_data']
+        llm_id = data.get("llm_id", 1)
+
         task = session.query(prediction_task).get(task_id)
         if not task:
             logger.error(f"Task {task_id} not found")
             return
-        if not input_data:
-            raise ValueError("Input data is empty")
-        result = f"Processed: {input_data}"
-        task.result = result
-        task.status = task_status.COMPLETED.value
+        
+        task.status = task_status.PROCESSING
         session.commit()
-        logger.info(f"Task {task_id} processed")
+
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": input_data}
+        ]
+
+        text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+        
+        generated_ids = model.generate(
+            **model_inputs,
+            max_new_tokens=512,
+            do_sample=True
+        )
+        
+        response = tokenizer.decode(
+            generated_ids[0][len(model_inputs.input_ids[0]):],
+            skip_special_tokens=True
+        )
+
+        task.result = response
+        task.status = task_status.COMPLETED
+        session.commit()
+        logger.info(f"Task {task_id} completed successfully")
+
     except Exception as e:
         logger.error(f"Error processing task {task_id}: {str(e)}")
         if task:
-            task.status = task_status.FAILED.value
-            task.result = str(e)
+            task.status = task_status.FAILED
+            task.result = f"Processing error:{str(e)}"
             session.commit()
     finally:
         session.close()
