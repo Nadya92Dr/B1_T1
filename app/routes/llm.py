@@ -5,6 +5,9 @@ from models.user import User
 from services.crud import user as UserService
 from routes.user import get_current_user
 from typing import List,Dict, Any
+from pydantic import BaseModel
+from sqlmodel import Session
+from services.rm.rm import send_task
 
 prediction_task_router = APIRouter(tags=["prediction_tasks"])
 
@@ -55,72 +58,48 @@ async def delete_all_prediction_tasks(
     return {"message": "All prediction tasks deleted successfully"}
 
 
-# @prediction_task_router.post("/new")
-# async def create_prediction_task(body: prediction_task = Body(...)) -> dict: 
-#     prediction_tasks.append(body)
-#     return {"message": "Prediction_task created successfully"}
+ml_route = APIRouter()
 
+class prediction_request(BaseModel):
+    text: str
 
-# @prediction_task_router.post("/predict", response_model=Dict[str, Any])
-# async def create_prediction(
-#     llm_id: int,
-#     user_id: int,
-#     request: prediction_request,
-#     # user: User= Depends(get_current_user),
-#     background_tasks: BackgroundTasks,
-#     session: Session = Depends(get_session)
-# )-> Dict [str, Any]:
+@ml_route.post(
+    "/send_task", 
+    response_model=Dict[str, Any],
+    summary="ML endpoint",
+    description="Send ml request"
+)
+async def send_task_endpoint(
+ request: prediction_request,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+) -> Dict[str, Any]:
     
-#     db_llm = session.get(llm, llm_id)
-#     if not db_llm:
-#         raise HTTPException(status_code=404, detail="LLM model not found")
+    if user.balance <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail="Insufficient balance to process request"
+        )
     
-#     user = UserService.get_user_by_id (user_id, session)
+    db_task = prediction_task(
+        user_id=user.user_id,
+        input_data=request.text,
+        status=task_status.PENDING,
+        result=None
+    )
+    
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
 
-#     if user.balance <= 0:
-#         raise HTTPException(
-#             status_code=402,
-#             detail="Insufficient balance to process request"
-#         )
-    
-#     db_task = prediction_task(
-#         user_id=user.user_id,
-#         llm_id=llm_id,
-#         input_data=request.text,
-#         status=task_status.PENDING,
-#         result=None
-#     )
-    
-#     session.add(db_task)
-#     session.commit()
-#     session.refresh(db_task)
+    send_task({
+        "task_id": db_task.prediction_task_id,
+        "input_data": request.text
+    })
 
-#     send_task({
-#         "task_id": db_task.prediction_task_id,
-#         "llm_id": llm_id,
-#         "input_data": request.text
-#     })
-
-#     return {
-#         "task_id": db_task.prediction_task_id,
-#         "status": db_task.status,
-#         "message": "Prediction task queued"
-#     }
-
-    # if not user:
-    #     raise HTTPException(status_code=404, detail="User not found")
-    
-    # try:
-    #     task = LlmService.run_llm(
-    #      user_id,
-    #      llm_id, 
-    #      request.text,
-    #      session,
-    #      background_tasks
-    #      )
-    #     return {"task_id": task.prediction_task_id, "status": "processing"}
-    
-    
-    # except ValueError as e:
-    #     raise HTTPException(status_code=400, detail=str(e))
+    return {
+        "task_id": db_task.prediction_task_id,
+        "status": db_task.status,
+        "message": "Task successfully queued"
+    }
     
