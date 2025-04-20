@@ -20,26 +20,26 @@ services:
       start_period: 30s
     networks:
       - llm-sport-network
-  rabbitmq:
-    image: rabbitmq:4.0.9-management-alpine
-    hostname: rabbitmq
-    restart: on-failure
-    environment:
-      - RABBITMQ_DEFAULT_USER=rmuser
-      - RABBITMQ_DEFAULT_PASS=rmpassword
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
-    volumes:
-      - rabbitmq_volume:/var/lib/rabbitmq/data
-    ports:
-      - 15672:15672
-      - 5672:5672
-    healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "check_running" ]
-      interval: 60s
-      timeout: 20s
-      retries: 3
-    networks:
-      - llm-sport-network
+  # rabbitmq:
+  #   image: rabbitmq:4.0.9-management-alpine
+  #   hostname: rabbitmq
+  #   restart: on-failure
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=rmuser
+  #     - RABBITMQ_DEFAULT_PASS=rmpassword
+  #     - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+  #   volumes:
+  #     - rabbitmq_volume:/var/lib/rabbitmq/data
+  #   ports:
+  #     - 15672:15672
+  #     - 5672:5672
+  #   healthcheck:
+  #     test: [ "CMD", "rabbitmq-diagnostics", "check_running" ]
+  #     interval: 60s
+  #     timeout: 20s
+  #     retries: 3
+  #   networks:
+  #     - llm-sport-network
   web:
     build: ./nginx
     ports:
@@ -65,40 +65,40 @@ services:
       - POSTGRES_DB=postgres_db
     networks:
       - llm-sport-network
-  ml_worker1:
-    build:
-      context: ./ml_worker/
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgress:postgres@database:5432/postgres_db
-    env_file:
-      - ./ml_worker/.env
-    volumes:
-      - ./ml_worker:/app
-      - ./app:/app
-    depends_on:
-      - database
-      - rabbitmq
-    networks:
-      - llm-sport-network
-  ml_worker2:
-    build:
-      context: ./ml_worker/
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgress:postgres@database:5432/postgres_db
-    env_file:
-      - ./ml_worker/.env
-    volumes:
-      - ./ml_worker:/app
-      - ./app:/app
-    depends_on:
-      - database
-      - rabbitmq
-    networks:
-      - llm-sport-network
+#   ml_worker1:
+#     build:
+#       context: ./ml_worker/
+#       dockerfile: Dockerfile
+#     restart: unless-stopped
+#     environment:
+#       DATABASE_URL: postgresql+asyncpg://postgress:postgres@database:5432/postgres_db
+#     env_file:
+#       - ./ml_worker/.env
+#     volumes:
+#       - ./ml_worker:/app
+#       - ./app:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - llm-sport-network
+#   ml_worker2:
+#     build:
+#       context: ./ml_worker/
+#       dockerfile: Dockerfile
+#     restart: unless-stopped
+#     environment:
+#       DATABASE_URL: postgresql+asyncpg://postgress:postgres@database:5432/postgres_db
+#     env_file:
+#       - ./ml_worker/.env
+#     volumes:
+#       - ./ml_worker:/app
+#       - ./app:/app
+#     depends_on:
+#       - database
+#       - rabbitmq
+#     networks:
+#       - llm-sport-network
 volumes:
   postgres_volume:
   rabbitmq_volume:

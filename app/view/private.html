@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Добро пожаловать, {{ user.email }}</h1>
+        <div style="background: #F5F2FF; padding: 1rem; border-radius: var(--radius);">
+            Баланс: <strong>{{ user.balance }}</strong> ₽
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Новый прогноз</h3>
+        <form method="POST" action="/predict">
+            <div class="form-group">
+                <textarea name="text" placeholder="Введите текст для анализа..."
+                    style="width: 100%; padding: 1rem; border-radius: var(--radius); border: 1px solid #E0E0E0;"
+                    rows="4"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">История операций</h3>
+        <div style="display: grid; gap: 1rem;">
+            {% for item in history %}
+            <div
+                style="display: flex; justify-content: space-between; padding: 1rem; border-radius: var(--radius); background: #F8F9FF;">
+                <div>
+                    <div style="font-weight: 500;">{{ item.description }}</div>
+                    <div style="font-size: 0.9em; color: var(--muted);">{{ item.date }}</div>
+                </div>
+                <div>{{ item.amount }} ₽</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

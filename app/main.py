@@ -6,15 +6,38 @@ from services.crud.llm import create_llm
 from services.crud.llm_inference import llm_service
 from datetime import datetime
 from models.user import User
-from fastapi import FastAPI
-from routes.llm import ml_route
+from fastapi import FastAPI, Request
+from fastapi.responces import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from routes.llm import prediction_task_router
+from routes.home import home_route
+from routes.user import user_route
 import uvicorn
 import json
 from models.llm import llm, prediction_task, transaction, history, task_status
 
 
 app = FastAPI()
-app.include_router(ml_route)
+app.include_router(prediction_task_router)
+app.include_router(home_route)
+app.include_router(user_route)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.exception_handler(404)
+async def not_found_exception_handler(request: Request, exc: HTTPException):
+    return templates.TemplateResponse(
+        "404.html",
+        {"request": request},
+        status_code=404
+    )
+
+@app.exception_handler(500)
+async def server_error_exception_handler(request: Request, exc: HTTPException):
+    return templates.TemplateResponse(
+        "500.html",
+        {"request": request},
+        status_code=500
+    )
 
 @app.get('/')
 def index():

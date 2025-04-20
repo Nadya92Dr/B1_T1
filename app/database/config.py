@@ -3,11 +3,19 @@ from functools import lru_cache
 from typing import Optional
 
 class Settings(BaseSettings):
-    DB_HOST: Optional[str] = "database"
-    DB_PORT: Optional[int] = 5432
-    DB_USER: Optional[str] = "postgres"
-    DB_PASS: Optional[str] = "postgres"
-    DB_NAME: Optional[str] = "postgres_db"
+    DB_HOST: Optional[str] = None
+    DB_PORT: Optional[int] = None
+    DB_USER: Optional[str] = None
+    DB_PASS: Optional[str] = None
+    DB_NAME: Optional[str] = None
+    COOKIE_NAME: Optional[str] = None
+    SECRET_KEY: Optional[str] = None
+
+
+    APP_NAME: Optional[str] = None
+    APP_DESCRIPTION: Optional[str] = None
+    DEBUG: Optional[bool] = None
+    API_VERSION: Optional[str] = None
     
     @property
     def DATABASE_URL_asyncpg(self):
@@ -17,8 +25,19 @@ class Settings(BaseSettings):
     def DATABASE_URL_psycopg(self):
         return f'postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
     
-    model_config = SettingsConfigDict(env_file='.env')
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True
+    )
+
+    def validate(self) -> None:
+        """Validate critical configuration settings"""
+        if not all([self.DB_HOST, self.DB_USER, self.DB_PASS, self.DB_NAME]):
+             raise ValueError("Missing required database configuration")
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    settings.validate()
+    return settings

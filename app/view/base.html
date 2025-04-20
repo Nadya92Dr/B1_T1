@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='/css/main.css') }}">
+    <script src="{{ request.url_for('static', path='/js/app.js') }}" defer></script>
+</head>
+<style>
+    :root {
+        --primary: #9A86FC;
+        --secondary: #FFA9E7;
+        --background: #FFFFFF;
+        --text: #2D2D2D;
+        --muted: #888888;
+        --radius: 12px;
+    }
+
+    * {
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .card {
+        background: var(--background);
+        border-radius: var(--radius);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    input {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #E0E0E0;
+        border-radius: var(--radius);
+        font-size: 1rem;
+    }
+
+    .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: var(--background);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-links a {
+        color: var(--text);
+        text-decoration: none;
+        margin-left: 2rem;
+        transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+        color: var(--primary);
+    }
+</style>
+</head>
+
+<body>
+    <nav class="nav">
+        <a href="/" class="logo">AI Service</a>
+        <div class="nav-links">
+            {% if user %}
+            <a href="/private">Личный кабинет</a>
+            <a href="/history">История</a>
+            <a href="/auth/logout">Выйти</a>
+            {% else %}
+            <a href="/auth/login">Войти</a>
+            <a href="/signup">Регистрация</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+
+</html>

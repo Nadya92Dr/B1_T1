@@ -58,18 +58,16 @@ async def delete_all_prediction_tasks(
     return {"message": "All prediction tasks deleted successfully"}
 
 
-ml_route = APIRouter()
-
 class prediction_request(BaseModel):
     text: str
 
-@ml_route.post(
-    "/send_task", 
+@prediction_task_router.post(
+    "/predict", 
     response_model=Dict[str, Any],
-    summary="ML endpoint",
-    description="Send ml request"
+    summary="predict endpoint",
+    description="Send predict request"
 )
-async def send_task_endpoint(
+async def predict_endpoint(
  request: prediction_request,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
@@ -92,7 +90,7 @@ async def send_task_endpoint(
     session.commit()
     session.refresh(db_task)
 
-    send_task({
+    prediction_task({
         "task_id": db_task.prediction_task_id,
         "input_data": request.text
     })

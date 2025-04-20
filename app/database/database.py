@@ -7,20 +7,40 @@ from models.llm import llm
 from services.crud.llm import create_llm
 from datetime import datetime
 
-engine = create_engine(url=get_settings().DATABASE_URL_psycopg, 
-                       echo=True, pool_size=5, max_overflow=10)
+def get_database_engine():
+    """
+    Create and configure the SQLAlchemy engine.
+    
+    Returns:
+        Engine: Configured SQLAlchemy engine
+    """
+    settings = get_settings()
+    
+    engine = create_engine(
+        url=settings.DATABASE_URL_psycopg,
+        echo=settings.DEBUG,
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=3600
+    )
+    return engine
+
+engine = get_database_engine()
 
 def get_session():
     with Session(engine) as session:
         yield session
          
-def init_database():
-    with engine.connect() as conn:
-        conn.execute(text("COMMIT"))
-        try:
-            conn.execute(text(f"CREATE DATABASE {get_settings().DB_NAME}"))
-        except Exception as e:
-            print(f"Database already exists: {e}")
+def init_database(drop_all: bool = False) -> None:
+    try:
+        engine = get_database_engine()
+        if drop_all:
+            SQLModel.metadata.drop_all(engine)
+        
+        SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        raise
 
     SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
