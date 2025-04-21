@@ -1,7 +1,5 @@
 import bcrypt
-import os
 from models.user import User, Admin, User_history
-from models.llm import llm, history 
 from typing import List, Optional
 
 def get_all_users(session) -> List[User]:

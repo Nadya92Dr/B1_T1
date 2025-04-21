@@ -14,16 +14,20 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="/signup">
+    <form method="POST" action="/user/signup">
         <div class="form-group">
-            <input type="email" name="email" placeholder="Email" required>
+            <input type="email" name="email" placeholder="Email" required value="{{ email }}" class="form-control">
         </div>
 
         <div class="form-group">
-            <input type="password" name="password" placeholder="Пароль" required>
+            <input type="password" name="password" placeholder="Пароль" required class="form-control">
         </div>
 
-        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+
+        <div class="text-center mt-3">
+            <a href="/auth/login" class="text-secondary">Уже есть аккаунт? Войти</a>
+        </div>
     </form>
 </div>
 {% endblock %}

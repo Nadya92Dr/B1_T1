@@ -1,11 +1,10 @@
-from sqlmodel import SQLModel, Session, create_engine, text  
-from contextlib import contextmanager
+from sqlmodel import SQLModel, Session, create_engine
 from .config import get_settings
-from services.crud.user import get_all_users, create_user
-from models.user import User, Admin, User_history 
+from services.crud.user import create_user
+from models.user import User, Admin
 from models.llm import llm
 from services.crud.llm import create_llm
-from datetime import datetime
+
 
 def get_database_engine():
     """

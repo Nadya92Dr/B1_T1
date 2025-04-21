@@ -1,15 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from auth.authenticate import authenticate_cookie, authenticate
 from auth.hash_password import HashPassword
 from auth.jwt_handler import create_access_token
 from database.database import get_session
-from services.auth.loginform import LoginForm
-from services.crud import user as UsersService
-from models.user import User
+from services.crud import user as UserService
+from models.user import User 
 from routes.user import get_current_user
 from database.config import get_settings
 from typing import Dict
@@ -99,7 +96,7 @@ async def handle_login(
     username= form_data.get("username")
     password = form_data.get("password")
 
-    user = UsersService.get_user_by_email(username, session)
+    user = UserService.get_user_by_email(username, session)
     if not user or not hash_password.verify_hash(password, user.password):
         response = templates.TemplateResponse(
             "login.html",

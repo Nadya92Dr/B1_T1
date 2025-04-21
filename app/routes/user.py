@@ -1,20 +1,20 @@
 from fastapi import APIRouter, HTTPException, status, Depends,Request, Response, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from database.database import get_session
+from database.config import get_settings
 from auth.hash_password import HashPassword
 from auth.jwt_handler import create_access_token
 from models.user import User, Admin
-from models.llm import llm
 from services.crud import user as UserService
-from services.crud import llm as LlmService
 from typing import List, Dict
 import logging
 
-logger = logging.getLogger(__name__)
 
+settings = get_settings()
+templates = Jinja2Templates(directory="view")
+logger = logging.getLogger(__name__)
 user_route = APIRouter(tags=['User'])
 hash_password = HashPassword()
 
@@ -27,18 +27,19 @@ async def get_current_user(session=Depends(get_session)) -> User:
     return user
 
 @user_route.get('/signup', response_class=HTMLResponse)
-async def signup_form(request: Request):
+async def signup_form(request: Request, errors: list = []):
     return templates.TemplateResponse(
-        "signup.html", {"request": request, "errors": []})
+        "signup.html", {"request": request, "errors": errors, "email": ""})
 
-@user_route.post('/signup', response_class=RedirectResponse)
-async def signup(user: User, request: Request, email: str = Form(...),
-                 password: str = Form(...), 
-                 session=Depends(get_session)) -> Dict[str, str]:
-   
-    try:
-        user_exist = UserService.get_user_by_email(user.email, session)
-        
+@user_route.post('/signup', response_class=HTMLResponse)
+async def signup(
+    request: Request, 
+    email: str = Form(...),
+    password: str = Form(...), 
+    session=Depends(get_session)
+): 
+     try:
+        user_exist = UserService.get_user_by_email(email, session)
         if user_exist:
             return templates.TemplateResponse(
                 "signup.html",
@@ -47,15 +48,22 @@ async def signup(user: User, request: Request, email: str = Form(...),
                     "errors": ["User with this email already exists"],
                     "email": email
                 },
-                status_code=409
+                status_code=status.HTTP_409_CONFLICT
             )
         
-        hashed_password = hash_password.create_hash(user.password)
-        user = User(email=email, password=hashed_password)
-        UserService.create_user(user, session)
+        hashed_password = hash_password.create_hash(password)
+        new_user = User (
+            user_id= int,
+            email=email, 
+            password=hashed_password,
+            nickname=email.split('@')[0],
+            balance=5,
+        )
 
-        access_token = create_access_token(user.email)
-        response = RedirectResponse(url="/", status_code=302)
+        UserService.create_user(new_user, session)
+
+        access_token = create_access_token(new_user.email)
+        response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
         response.set_cookie(
             key=settings.COOKIE_NAME,
             value=f"Bearer {access_token}",
@@ -63,9 +71,7 @@ async def signup(user: User, request: Request, email: str = Form(...),
             max_age=3600
         )
         return response
-        
-    except Exception as e:
-        logger.error(f"Error during signup: {str(e)}")
+     except Exception as e:
         return templates.TemplateResponse(
             "signup.html",
             {
@@ -73,7 +79,7 @@ async def signup(user: User, request: Request, email: str = Form(...),
                 "errors": ["Internal server error"],
                 "email": email
             },
-            status_code=500
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 

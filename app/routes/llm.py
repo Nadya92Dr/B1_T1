@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Body, HTTPException, status, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, Depends
 from database.database import Session, get_session
-from models.llm import llm, prediction_task, prediction_request, task_status
+from models.llm import prediction_task, prediction_request, task_status
 from models.user import User
-from services.crud import user as UserService
 from routes.user import get_current_user
 from typing import List,Dict, Any
 from pydantic import BaseModel
 from sqlmodel import Session
-from services.rm.rm import send_task
 
 prediction_task_router = APIRouter(tags=["prediction_tasks"])
 

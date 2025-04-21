@@ -1,15 +1,14 @@
-import bcrypt
-import os
-from sqlmodel import SQLModel, Field, Relationship, ForeignKey 
+from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime
 
 class User (SQLModel, table=True):
-    user_id: int = Field (default = None, primary_key=True)
+    user_id: Optional[int] = Field (default = None, primary_key=True)
     email:str = Field (unique=True)
     password: str
     nickname: str
-    balance: int
+    balance: int =5
+    is_admin: bool = False
     transaction: Optional[str] = None
 
     tasks: list ["models.llm.prediction_task"] = Relationship (back_populates="user")

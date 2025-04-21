@@ -1,5 +1,5 @@
 from database.config import get_settings
-from database.database import get_session, init_database, engine
+from database.database import init_database, engine
 from sqlmodel import Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm
@@ -7,14 +7,14 @@ from services.crud.llm_inference import llm_service
 from datetime import datetime
 from models.user import User
 from fastapi import FastAPI, Request
-from fastapi.responces import JSONResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from routes.llm import prediction_task_router
 from routes.home import home_route
 from routes.user import user_route
 import uvicorn
 import json
-from models.llm import llm, prediction_task, transaction, history, task_status
+from models.llm import llm, prediction_task, transaction, task_status
 
 
 app = FastAPI()
@@ -22,6 +22,8 @@ app.include_router(prediction_task_router)
 app.include_router(home_route)
 app.include_router(user_route)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="view")
 
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: HTTPException):

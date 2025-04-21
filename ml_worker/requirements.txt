@@ -1,11 +1,17 @@
 accelerate
 bcrypt==4.3.0
+dnspython==2.7.0
+ffmpy==0.5.0
+mpmath==1.3.0
+networkx==3.4.2
 pika==1.3.2
 sqlmodel
 SQLAlchemy==2.0.39
+sympy==1.13.1
 python-dotenv==1.0.1
 pydantic-settings==2.8.1
 psycopg2-binary==2.9.10
+psutil==7.0.0
 torch==2.6.0
 fastapi==0.115.11
 fastapi-cli==0.0.7

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
 from routes.home import home_route
 from routes.user import user_route
 from routes.llm import prediction_task_router
@@ -7,6 +8,11 @@ from database.database import init_database
 from database.config import get_settings
 import uvicorn
 import logging
+from fastapi.staticfiles import StaticFiles
+
+templates = Jinja2Templates(directory="view")
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

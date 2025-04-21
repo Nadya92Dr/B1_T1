@@ -1,9 +1,7 @@
 from models.llm import llm, prediction_task, transaction
 from models.user import User
-from services.crud import user as UserService
 from services.crud.llm_inference import llm_service
 from models.llm import task_status
-from fastapi import BackgroundTasks
 from services.rm.rm import send_task
 
 from typing import List, Optional
