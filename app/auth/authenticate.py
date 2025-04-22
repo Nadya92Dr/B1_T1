@@ -25,3 +25,5 @@ async def authenticate_cookie(token: str=Depends(oauth2_scheme_cookie)) -> str:
     token = token.removeprefix('Bearer ')
     decoded_token = verify_access_token(token) 
     return decoded_token["user"]
+
+__all__ = ["authenticate", "authenticate_cookie"]

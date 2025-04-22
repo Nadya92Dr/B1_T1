@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends,Request, Response, Form
+from fastapi import APIRouter, HTTPException, status, Depends,Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
+from auth.authenticate import authenticate_cookie
 from database.database import get_session
 from database.config import get_settings
 from auth.hash_password import HashPassword
@@ -18,10 +19,9 @@ logger = logging.getLogger(__name__)
 user_route = APIRouter(tags=['User'])
 hash_password = HashPassword()
 
-async def get_current_user(session=Depends(get_session)) -> User:
-    
-    user_id = int  
-    user = UserService.get_user_by_id(user_id, session)
+async def get_current_user(email: str = Depends(authenticate_cookie), 
+                           session=Depends(get_session)) -> User:
+    user = UserService.get_user_by_email(email, session)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -53,7 +53,6 @@ async def signup(
         
         hashed_password = hash_password.create_hash(password)
         new_user = User (
-            user_id= int,
             email=email, 
             password=hashed_password,
             nickname=email.split('@')[0],
@@ -61,6 +60,7 @@ async def signup(
         )
 
         UserService.create_user(new_user, session)
+        session.commit()
 
         access_token = create_access_token(new_user.email)
         response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)

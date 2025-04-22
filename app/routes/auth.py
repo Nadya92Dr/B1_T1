@@ -49,7 +49,13 @@ async def login_post(request: Request, session=Depends(get_session)):
     if await form.is_valid():
         try:
             response = RedirectResponse("/", status.HTTP_302_FOUND)
-            await login_for_access_token(response=response, form_data=form, session=session)
+            await login_for_access_token(
+                response=response, 
+                form_data=OAuth2PasswordRequestForm(
+        username=form.username, 
+        password=form.password
+    ), 
+                session=session)
             form.__dict__.update(msg="Login Successful!")
             print("[green]Login successful!!!!")
             return response

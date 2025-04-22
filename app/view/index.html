@@ -1,35 +1,36 @@
 {% extends "base.html" %}
 
 {% block title %}
-Home page!!!
+Добро пожаловать!
 {% endblock %}
 
 {% block head %}
-    {{ super() }}
-    <style type="text/css">
-        .important { color: #336699; }
-    </style>
+{{ super() }}
+<style type="text/css">
+    .important {
+        color: #336699;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<h1>Home page! 🏡</h1>
+<h1>Sport Ind 🏡</h1>
 
 <p class="important">
-    Welcome to my awesome homepage.
+    Привет! Здесь вы сможете найти спортивные активности, которые подходят именно вам!
 </p>
 
 {% if user %}
-    <h2>You are logged in :)</h2>
-    <p>
-        Hi {{ user }}! You are logged in, so you can access the private 
-        page. <a href="/private">here</a>!
-    </p>
+<h2>ура! вы авторизованы :)</h2>
+<p>
+    Привет, {{ user }}! Это ваш личный кабинет. <a href="/private">here</a>!
+</p>
 {% else %}
-    <h2>You are NOT logged in :(</h2>
-    <p>
-        Hello stranger. You are not logged. Please follow the link to
-        <a href="/auth/login" class="btn">login</a>!
-    </p>
+<h2>Вы еще не авторизованы :(</h2>
+<p>
+    Прежде чем начать, пожалуйста, авторизуйтесь или зарегистрируйтесь по ссылке
+    <a href="/auth/login" class="btn">login</a>!
+</p>
 {% endif %}
 
 <hr>

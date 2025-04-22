@@ -11,8 +11,6 @@ import logging
 from fastapi.staticfiles import StaticFiles
 
 templates = Jinja2Templates(directory="view")
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -47,6 +45,8 @@ def create_application() -> FastAPI:
     return app
 
 app = create_application()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.on_event("startup") 
 def on_startup():

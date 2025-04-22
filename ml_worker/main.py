@@ -5,6 +5,7 @@ import logging
 from database.database import Session
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from models.llm import prediction_task, task_status
+import json
 
 
 logging.basicConfig(
@@ -125,6 +126,16 @@ channel.basic_consume(
     on_message_callback=callback,
     auto_ack=False 
 )
+
+channel.basic_publish(
+        exchange='',
+        routing_key='result_queue',
+        body=json.dumps({
+            'task_id': task_id,
+            'status': task_status.COMPLETED,
+            'result': response
+        })
+    )
 
 logger.info('Waiting for messages. To exit, press Ctrl+C')
 channel.start_consuming()

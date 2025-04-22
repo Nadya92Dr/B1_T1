@@ -3,7 +3,7 @@ from database.database import init_database, engine
 from sqlmodel import Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm
-from services.crud.llm_inference import llm_service
+from services.rm import setup_result_consumer
 from datetime import datetime
 from models.user import User
 from fastapi import FastAPI, Request
@@ -13,7 +13,6 @@ from routes.llm import prediction_task_router
 from routes.home import home_route
 from routes.user import user_route
 import uvicorn
-import json
 from models.llm import llm, prediction_task, transaction, task_status
 
 
@@ -48,7 +47,7 @@ def index():
 
 @app.on_event ("startup")
 async def startup_event ():
-    llm_service.load_model()
+    setup_result_consumer()
 
 
 if __name__ == '__main__':

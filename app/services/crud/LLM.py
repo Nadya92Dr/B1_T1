@@ -89,12 +89,13 @@ def run_llm (user_id:int, llm_id: int, input_data: str, session,  background_tas
 
     task_data = {
         'task_id': new_task.prediction_task_id,
-        'input_data': input_data
+        'input_data': input_data,
+        'llm_id': llm_id
     }
     send_task(task_data)
 
-    background_tasks.add_task(process_task_async, 
-    new_task.prediction_task_id, input_data, session)
+    # background_tasks.add_task(process_task_async, 
+    # new_task.prediction_task_id, input_data, session)
 
     new_transaction = transaction(
           user_id=user.user_id,
