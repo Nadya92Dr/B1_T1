@@ -41,3 +41,9 @@ def get_settings() -> Settings:
     settings = Settings()
     settings.validate()
     return settings
+
+
+class TestSettings(Settings):
+    @property
+    def DATABASE_URL_psycopg(self):
+        return "postgresql+psycopg2://test:test@localhost/test_db"
