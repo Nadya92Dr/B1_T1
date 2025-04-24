@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="view")
 
 @auth_route.post("/token")
 async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm=Depends(), session=Depends(get_session)) -> dict[str, str]:    
-    user_exist = UsersService.get_user_by_email(form_data.username, session)
+    user_exist = UserService.get_user_by_email(form_data.username, session)
     if user_exist is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
     
@@ -44,7 +44,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 #     return templates.TemplateResponse("login.html", context)
 
 
-@auth_route.get("/auth/login", response_class=HTMLResponse)
+@auth_route.get("/login", response_class=HTMLResponse)
 async def login_page (request: Request, errors: list = []):
     return templates.TemplateResponse(
         "login.html",
@@ -56,7 +56,7 @@ async def login_page (request: Request, errors: list = []):
         }
     )
 
-@auth_route.post("/auth/login", response_class=RedirectResponse)
+@auth_route.post("/login", response_class=RedirectResponse)
 async def handle_login(
     request:Request,
     session=Depends(get_session)
@@ -88,7 +88,7 @@ async def handle_login(
     )
     return response
 
-@auth_route.get("/auth/logout", response_class=RedirectResponse)
+@auth_route.get("/logout", response_class=RedirectResponse)
 async def logout():
     response = RedirectResponse(url="/")
     response.delete_cookie(settings.COOKIE_NAME)

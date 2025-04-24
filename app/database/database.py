@@ -41,7 +41,7 @@ def init_database(drop_all: bool = False) -> None:
     except Exception as e:
         raise
 
-    SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.drop_all(engine, checkfirst=True)
     SQLModel.metadata.create_all(engine)
 
     demo_user = User (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)

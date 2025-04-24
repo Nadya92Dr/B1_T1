@@ -16,7 +16,7 @@ import logging
 settings = get_settings()
 templates = Jinja2Templates(directory="view")
 logger = logging.getLogger(__name__)
-user_route = APIRouter(tags=['User'])
+user_route = APIRouter()
 hash_password = HashPassword()
 
 async def get_current_user(email: str = Depends(authenticate_cookie), 

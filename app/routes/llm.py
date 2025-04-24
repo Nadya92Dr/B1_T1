@@ -56,9 +56,6 @@ async def delete_all_prediction_tasks(
     return {"message": "All prediction tasks deleted successfully"}
 
 
-class prediction_request(BaseModel):
-    text: str
-
 @prediction_task_router.post(
     "/predict", 
     response_model=Dict[str, Any],

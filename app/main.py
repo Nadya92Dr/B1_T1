@@ -3,15 +3,16 @@ from database.database import init_database, engine
 from sqlmodel import Session
 from services.crud.user import get_all_users, create_user
 from services.crud.llm import create_llm
-from services.rm import setup_result_consumer
+from services.rm.rm import setup_result_consumer
 from datetime import datetime
 from models.user import User
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from routes.llm import prediction_task_router
 from routes.home import home_route
 from routes.user import user_route
+from routes.auth import auth_route
 import uvicorn
 from models.llm import llm, prediction_task, transaction, task_status
 
@@ -20,6 +21,7 @@ app = FastAPI()
 app.include_router(prediction_task_router)
 app.include_router(home_route)
 app.include_router(user_route)
+app.include_router(auth_route)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="view")
