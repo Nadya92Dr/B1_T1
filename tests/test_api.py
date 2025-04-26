@@ -9,19 +9,19 @@ from database.config import get_settings
 from auth.hash_password import HashPassword
 from auth.jwt_handler import create_access_token
 from models.user import User, Admin
-from services.crud import user as UserService
+from services.crud.user import user as UserService
 from routes.user import hash_password
+from services.crud.llm import process_task_async
 
 
 def test_prediction_lifecycle(client: TestClient, mocker):
     mock_process = mocker.patch('services.crud.llm_inference.llm_service.process_request')
     mock_process.return_value = "test prediction"
 
-    client.headers = {"token_type": "bearer"}
-
     create_response = client.post(
         "/predict",
-        json={"text": "test input"}
+        json={"text": "test input"},
+        headers={"Authorization": "Bearer test_token"}
     )
     assert create_response.status_code == 200
     task_data = create_response.json()
@@ -49,6 +49,20 @@ def test_prediction_lifecycle(client: TestClient, mocker):
     assert task_response.json()["status"] == "completed"
     assert task_response.json()["result"] == "test prediction"
 
+def test_create_prediction(client: TestClient):
+    prediction_data = {
+        "task_id": "test_task_id", 
+        "input_data": "test input"  
+    }
+    
+    response = client.post(
+        "/api/events/new/",
+        json=prediction_data,
+        headers={"Authorization": "Bearer test_token"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Prediction created successfully"}
 
 def test_successful_signup(client: TestClient):
     response = client.post(
@@ -75,11 +89,10 @@ def test_prediction_failure(client: TestClient, mocker):
     mocker.patch('services.crud.llm_inference.llm_service.process_request',
                side_effect=Exception("Test error"))
 
-    client.headers = {"Authorization": "Bearer test_token"}
-
     create_response = client.post(
         "/predict",
-        json={"text": "failing input"}
+        json={"text": "failing input"},
+        headers={"Authorization": "Bearer test_token"} 
     )
     task_id = create_response.json()["task_id"]
 
@@ -96,19 +109,69 @@ def test_prediction_failure(client: TestClient, mocker):
         "result": "Test error"
     }
 
-def test_user_balance_update(client: TestClient, mocker):
+def test_balance_on_prediction(client: TestClient, mocker):
     mocker.patch('services.crud.llm_inference.llm_service.process_request',
                return_value="balance test")
 
-    client.headers = {"Authorization": "Bearer test_token"}
+    initial_balance = client.get("/user/profile", 
+    headers={"Authorization": "Bearer test_token"}).json()["balance"]
 
-    initial_balance = client.get("/user/profile").json()["balance"]
+    client.post(
+        "/predict",
+        json={"text": "balance test"},
+        headers={"Authorization": "Bearer test_token"}
+    )
 
-    client.post("/predict", json={"text": "balance test"})
-
-    updated_balance = client.get("/user/profile").json()["balance"]
-    
+    updated_balance = client.get("/user/profile", 
+    headers={"Authorization": "Bearer test_token"}).json()["balance"]
     assert updated_balance == initial_balance - 2
+
+def test_balance_recharge(client: TestClient, session: Session):
+    admin = Admin(email="admin@test.com", password=hash_password.create_hash("adminpass"))
+    user = User(email="user@test.com", password="pass", balance=10)
+    session.add_all([admin, user])
+    session.commit()
+
+    response = client.post(
+        "/user/recharge",
+        json={"user_id": user.user_id, "amount": 50, "admin_id": admin.admin_id},
+        headers={"Authorization": "Bearer test_token"}
+    )
+    assert response.status_code == 200
+    assert response.json()["balance"] == 60
+
+
+def test_balance_with_zero_balance(client: TestClient, session: Session):
+    user = User(email="nobalance@test.com", password="pass", balance=0)
+    session.add(user)
+    session.commit()
+
+    response = client.post(
+        "/predict",
+        json={"text": "test input"},
+        headers={"Authorization": "Bearer test_token"}
+    )
+    assert response.status_code == 402
+    assert "Insufficient balance" in response.text
+
+def test_balance_recharge_unauthorized(client: TestClient):
+    response = client.post(
+        "/user/recharge",
+        json={"user_id": 1, "amount": 50, "admin_id": 999}
+    )
+    assert response.status_code == 403
+
+def test_negative_balance_recharge(client: TestClient, session: Session):
+    admin = Admin(email="admin@test.com", password="pass")
+    user = User(email="user@test.com", password="pass")
+    session.add_all([admin, user])
+    session.commit()
+    
+    response = client.post(
+        "/user/recharge",
+        json={"user_id": user.user_id, "amount": -100, "admin_id": admin.admin_id}
+    )
+    assert response.status_code == 400
 
 def test_home_request(client: TestClient):
     response = client.get("/health")
@@ -119,17 +182,6 @@ def test_get_predictions(client: TestClient):
     response = client.get("/api/events/")
     assert response.status_code == 200
     assert response.json() == []
-    
-def test_create_prediction(client: TestClient):
-    prediction_data = {
-        "task_id": db_task.prediction_task_id,
-        "input_data": request.text
-    }
-    
-    response = client.post("/api/events/new/", json=prediction_data)
-
-    assert response.status_code == 200
-    assert response.json() == {"message": "Prediction created successfully"}
     
     
 def test_get_prediction(client: TestClient):
@@ -154,25 +206,6 @@ def test_delete_prediction(client: TestClient):
     assert response.json() == []
 
 
-def test_balance_recharge_by_admin(client: TestClient, session: Session):
-    admin = Admin(email="admin@test.com", password=hash_password.create_hash("adminpass"))
-    user = User(email="balanceuser@test.com", password="pass", balance=10)
-    session.add_all([admin, user])
-    session.commit()
-
-    response = client.post(
-        "/user/recharge",
-        json={"user_id": user.user_id, "amount": 50, "admin_id": admin.admin_id}
-    )
-    assert response.status_code == 200
-    assert response.json()["balance"] == 60
-
-def test_balance_recharge_unauthorized(client: TestClient):
-    response = client.post(
-        "/user/recharge",
-        json={"user_id": 1, "amount": 50, "admin_id": 999}
-    )
-    assert response.status_code == 403
 
 def test_transaction_history_after_prediction(client: TestClient):
     client.post("/predict", json={"text": "test input"})
@@ -229,14 +262,3 @@ def test_invalid_email_signup(client: TestClient):
     assert response.status_code == 400
     assert "valid email" in response.text
 
-def test_negative_balance_recharge(client: TestClient, session: Session):
-    admin = Admin(email="admin@test.com", password="pass")
-    user = User(email="user@test.com", password="pass")
-    session.add_all([admin, user])
-    session.commit()
-    
-    response = client.post(
-        "/user/recharge",
-        json={"user_id": user.user_id, "amount": -100, "admin_id": admin.admin_id}
-    )
-    assert response.status_code == 400

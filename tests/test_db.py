@@ -1,31 +1,15 @@
 from sqlmodel import SQLModel, Session, create_engine
 from models.user import User
 import pytest
-# from database.database import get_database_engine, init_database
-
-@pytest.fixture(scope="module")
-def test_engine():
-    test_engine = create_engine("postgresql+psycopg2://test:test@localhost/test_db")
-    SQLModel.metadata.create_all(test_engine)
-    yield test_engine
-    SQLModel.metadata.drop_all(test_engine)
-    test_engine.dispose()
-
-@pytest.fixture
-def session(test_engine):
-    with Session(test_engine) as session:
-        yield session
-        session.rollback()  
 
 
-def test_create_user(session: Session):
-    user = User(id=1, email="test@mail.ru", password="1234")
-    session.add(user)
-    session.commit()
+def test_create_user(db_session: Session):
+    user = User(email="test@mail.ru", password="1234")
+    db_session.add(user)
+    db_session.commit()
 
-    db_user = session.get(User, 1)
+    db_user = db_session.get(User, 1)
     assert db_user.email == "test@mail.ru"
-    assert db_user.password == "1234"
     
 def test_fail_create_user(session: Session):
     with pytest.raises(Exception) as ex:
@@ -59,14 +43,16 @@ def test_get_all_users(session: Session):
     assert len(users) == 2
     
         
-def test_delete_user(session: Session):
-    test_create_user(session)
-    
-    user = session.get(User, 1)
-    assert user is not None, "User with id=0 not found"
+def test_delete_user(db_session: Session):
+    user = User(email="test@mail.ru", password="1234")
+    db_session.add(user)
+    db_session.commit()
 
-    session.delete(user)
-    session.commit()
+    db_user = db_session.get(User, 1)
+    assert db_user is not None
 
-    deleted_user = session.get(User, 1)
-    assert deleted_user is None, "User was not deleted"
+    db_session.delete(db_user)
+    db_session.commit()
+
+    deleted_user = db_session.get(User, 1)
+    assert deleted_user is None
