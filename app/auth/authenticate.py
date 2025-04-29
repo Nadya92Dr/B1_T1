@@ -18,9 +18,9 @@ oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(tokenUrl="/auth/login")
 
 async def authenticate_cookie(token: str=Depends(oauth2_scheme_cookie)) -> str:
     if not token:
-        raise HTTPException( 
-        status_code=status.HTTP_403_FORBIDDEN, 
-        detail="Sign in for access"
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
         )
     token = token.removeprefix('Bearer ')
     decoded_token = verify_access_token(token) 

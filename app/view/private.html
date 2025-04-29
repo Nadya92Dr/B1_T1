@@ -10,10 +10,12 @@
             Баланс: <strong>{{ user.balance }}</strong> ₽
         </div>
     </div>
-
+    <form action="/logout" method="GET">
+        <button type="submit" class="btn btn-secondary">Выйти</button>
+    </form>
     <div class="card" style="margin-bottom: 2rem;">
         <h3 style="margin-bottom: 1rem;">Новый прогноз</h3>
-        <form method="POST" action="/predict">
+        <form method="POST" action="/prediction/predict">
             <div class="form-group">
                 <textarea name="text" placeholder="Введите текст для анализа..."
                     style="width: 100%; padding: 1rem; border-radius: var(--radius); border: 1px solid #E0E0E0;"

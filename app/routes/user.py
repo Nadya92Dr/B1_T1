@@ -23,7 +23,8 @@ async def get_current_user(email: str = Depends(authenticate_cookie),
                            session=Depends(get_session)) -> User:
     user = UserService.get_user_by_email(email, session)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials")
     return user
 
 @user_route.get('/signup', response_class=HTMLResponse)
@@ -124,6 +125,31 @@ async def get_all_users(session=Depends(get_session)) -> list:
 async def get_admins(session=Depends(get_session)) -> list:
     return UserService.get_admins(session)
 
+@user_route.get('/private', response_class=HTMLResponse)
+async def private_page(
+    request: Request,
+    user: User = Depends(get_current_user),
+    session=Depends(get_session)
+):
+    user_history = UserService.get_user_history(user.id, session)
+    return templates.TemplateResponse(
+        "private.html",
+        {
+            "request": request,
+            "user": user,
+            "history": user_history
+        }
+    )
+
+@user_route.get('/logout')
+async def logout():
+    response = RedirectResponse(url='/', status_code=status.HTTP_302_FOUND)
+    response.delete_cookie(
+        key=settings.COOKIE_NAME,
+        path='/',
+        httponly=True
+    )
+    return response
 
 @user_route.get("/balance")
 async def get_balance(user_id: int, session = Depends (get_session)):

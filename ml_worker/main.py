@@ -31,7 +31,8 @@ connection_params = pika.ConnectionParameters(
 connection = pika.BlockingConnection(connection_params)
 channel = connection.channel()
 queue_name = 'ml_task_queue'
-channel.queue_declare(queue=queue_name) 
+channel.queue_declare(queue='ml_task_queue')
+channel.queue_declare(queue='result_queue')
 
 model_name = "Qwen/Qwen2.5-0.5B-Instruct"
 
@@ -109,7 +110,17 @@ def callback(ch, method, properties, body):
         task.result = response
         task.status = task_status.COMPLETED
         session.commit()
-        logger.info(f"Task {task_id} completed successfully")
+        
+        channel.basic_publish(
+            exchange='',
+            routing_key='result_queue',
+            body=json.dumps({
+                'task_id': task_id,
+                'status': task_status.COMPLETED,
+                'result': response
+            })
+        )
+        logger.info(f"Result published for task {task_id}")
 
     except Exception as e:
         logger.error(f"Error processing task {task_id}: {str(e)}")
@@ -126,16 +137,6 @@ channel.basic_consume(
     on_message_callback=callback,
     auto_ack=False 
 )
-
-channel.basic_publish(
-        exchange='',
-        routing_key='result_queue',
-        body=json.dumps({
-            'task_id': task_id,
-            'status': task_status.COMPLETED,
-            'result': response
-        })
-    )
 
 logger.info('Waiting for messages. To exit, press Ctrl+C')
 channel.start_consuming()

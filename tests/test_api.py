@@ -13,6 +13,7 @@ from services.crud.user import user as UserService
 from routes.user import hash_password
 from services.crud.llm import process_task_async
 
+settings = get_settings()
 
 def test_prediction_lifecycle(client: TestClient, mocker):
     mock_process = mocker.patch('services.crud.llm_inference.llm_service.process_request')
@@ -83,6 +84,39 @@ def test_successful_login(client: TestClient):
     response = client.post("/auth/login", data={"username": "login@test.com", "password": "pass"})
     assert response.status_code == 302
     assert "Bearer" in response.cookies.get(settings.COOKIE_NAME)
+
+
+def test_successful_signin(client: TestClient):
+    client.post(
+        "/user/signup",
+        data={"email": "login@test.com", "password": "pass"}
+    )
+    
+    response = client.post(
+        "/auth/login",
+        data={"username": "login@test.com", "password": "pass"}
+    )
+    assert response.status_code == 302
+    assert "Bearer" in response.cookies.get(settings.COOKIE_NAME)
+
+def test_signin_invalid_password(client: TestClient):
+    client.post(
+        "/user/signup",
+        data={"email": "user@test.com", "password": "pass"}
+    )
+    response = client.post(
+        "/auth/login",
+        data={"username": "user@test.com", "password": "wrongpass"}
+    )
+    assert response.status_code == 401
+
+
+def test_signin_nonexistent_user(client: TestClient):
+    response = client.post(
+        "/auth/login",
+        data={"username": "nonexistent@test.com", "password": "pass"}
+    )
+    assert response.status_code == 404
 
 
 def test_prediction_failure(client: TestClient, mocker):
@@ -200,11 +234,18 @@ def test_clear_predictions(client: TestClient):
     assert response.json() == {"message": "predictions deleted successfully"}
     
 def test_delete_prediction(client: TestClient):
-    response = client.get("/api/events/")
+    create_response = client.post(
+        "/predict",
+        json={"text": "test input"}
+    )
+    assert create_response.status_code == 200
+    task_id = create_response.json()["task_id"]
     
-    assert response.status_code == 200
-    assert response.json() == []
-
+    delete_response = client.delete(f"/api/events/{task_id}")
+    assert delete_response.status_code == 200
+    
+    get_response = client.get(f"/api/events/{task_id}")
+    assert get_response.status_code == 404
 
 
 def test_transaction_history_after_prediction(client: TestClient):

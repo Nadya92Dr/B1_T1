@@ -111,12 +111,3 @@ def run_llm (user_id:int, llm_id: int, input_data: str, session,  background_tas
     session.commit()
     return new_task 
 
-    
-    
-
-    
-
-
-
-    
-    
