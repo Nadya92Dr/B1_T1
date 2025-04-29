@@ -54,7 +54,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def on_startup():
     try:
         logger.info("Initializing database...")
-        init_database(drop_all=True)
+        init_database(drop_all=False)
         logger.info("Application startup completed successfully")
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}")

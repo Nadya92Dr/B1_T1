@@ -15,7 +15,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 connection_params = pika.ConnectionParameters(
     host='rabbitmq', 
     port=5672,         
@@ -28,14 +27,7 @@ connection_params = pika.ConnectionParameters(
     blocked_connection_timeout=2
 )
 
-connection = pika.BlockingConnection(connection_params)
-channel = connection.channel()
-queue_name = 'ml_task_queue'
-channel.queue_declare(queue='ml_task_queue')
-channel.queue_declare(queue='result_queue')
-
 model_name = "Qwen/Qwen2.5-0.5B-Instruct"
-
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype="auto",
@@ -43,29 +35,11 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-prompt = "Give me a short introduction to large language model."
-messages = [
-    {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
-    {"role": "user", "content": prompt}
-]
-text = tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True
-)
-model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
-
-generated_ids = model.generate(
-    **model_inputs,
-    max_new_tokens=512
-)
-generated_ids = [
-    output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-]
-
-response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
-
+connection = pika.BlockingConnection(connection_params)
+channel = connection.channel()
+queue_name = 'ml_task_queue'
+channel.queue_declare(queue='ml_task_queue')
+channel.queue_declare(queue='result_queue')
 
 def callback(ch, method, properties, body):
     session = Session()
@@ -140,3 +114,5 @@ channel.basic_consume(
 
 logger.info('Waiting for messages. To exit, press Ctrl+C')
 channel.start_consuming()
+
+

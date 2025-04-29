@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Form
 from database.database import Session, get_session
 from models.llm import prediction_task, prediction_request, task_status
 from models.user import User
@@ -63,9 +63,10 @@ async def delete_all_prediction_tasks(
     description="Send predict request"
 )
 async def predict_endpoint(
- request: prediction_request,
+    text: str = Form(...), 
+    llm_id: int = Form(1),
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
 ) -> Dict[str, Any]:
     
     if user.balance <= 0:
@@ -76,7 +77,8 @@ async def predict_endpoint(
     
     db_task = prediction_task(
         user_id=user.user_id,
-        input_data=request.text,
+        llm_id=llm_id
+        input_data=text,
         status=task_status.PENDING,
         result=None
     )
