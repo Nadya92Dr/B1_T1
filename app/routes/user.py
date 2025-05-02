@@ -136,12 +136,18 @@ async def private_page(
     session=Depends(get_session)
 ):
     user_history = UserService.get_user_history(user.id, session)
+    all_users = UserService.get_all_users(session) if user.is_admin else []
+
+    message = request.query_params.get("message")
+
     return templates.TemplateResponse(
         "private.html",
         {
             "request": request,
             "user": user,
-            "history": user_history
+            "history": user_history,
+            "all_users": all_users,
+            "message": message
         }
     )
 
@@ -180,13 +186,23 @@ async def get_history(request: Request, user: User = Depends(get_current_user),
 
 @user_route.post("/recharge")
 async def recharge_balance(
-    user_id: int,
-    amount: int,
-    admin_id:int,
+    email: str = Form (...),
+    amount: int= Form (...),
+    current_user: User = Depends(get_current_user),
     session=Depends(get_session)
 ):
-    admin = session.query(Admin).filter(Admin.admin_id == admin_id).first()
-    if not admin:
+    if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Forbidden")
     
-    return UserService.recharge_balance(admin, user_id, amount, session)
+    try:
+        user = UserService.recharge_balance(current_user, email, amount, session)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return RedirectResponse(
+            url=f"/private?message=Баланс+пользователя+{email}+успешно+пополнен+{amount}₽",
+            status_code=303
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    

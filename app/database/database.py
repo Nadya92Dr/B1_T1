@@ -4,6 +4,7 @@ from services.crud.user import create_user
 from models.user import User, Admin
 from models.llm import llm
 from services.crud.llm import create_llm
+from auth.hash_password import HashPassword
 
 
 def get_database_engine():
@@ -30,7 +31,9 @@ engine = get_database_engine()
 def get_session():
     with Session(engine) as session:
         yield session
-         
+
+hash_helper = HashPassword()
+        
 def init_database(drop_all: bool = False) -> None:
     try:
         engine = get_database_engine()
@@ -44,19 +47,23 @@ def init_database(drop_all: bool = False) -> None:
     SQLModel.metadata.drop_all(engine, checkfirst=True)
     SQLModel.metadata.create_all(engine)
 
-    demo_user = User (user_id = 1, email = "demo@email.ru", password = "test", nickname = "u_demo", balance = 5)
-    demo_admin = Admin (admin_id = 2, email = "admin@email.ru", password = "pass",nickname = "admin")
+    hash_helper = HashPassword()
+
+    demo_user = User (id = 102, email = "demo@email.ru",  password=hash_helper.create_hash("test"), nickname = "u_demo", balance = 5)
+    demo_admin = User(
+        id=100,
+        email="admin@email.ru",
+        password=hash_helper.create_hash("pass"), 
+        nickname="admin",
+        is_admin=True  
+    )
     demo_llm = llm (llm_id = 1, title = "демо ллм", description = "описание", cost_per_request = 3)
-
-
 
     with Session(engine) as session:
 
         create_user(demo_user, session) 
         create_user(demo_admin, session)
         create_llm (demo_llm, session)
-        session.add (demo_admin)
         
         session.commit()  
-        session.refresh (demo_admin)
 

@@ -12,6 +12,7 @@ class User (SQLModel, table=True):
     transaction: Optional[str] = None
 
     tasks: list ["models.llm.prediction_task"] = Relationship (back_populates="user")
+    history: list ["User_history"] = Relationship (back_populates = "user")
 
 
     def say(self):
@@ -23,6 +24,8 @@ class User_history (SQLModel, table=True):
     action: str
     timestamp: datetime 
     details: str
+
+    user: Optional [User] = Relationship (back_populates = "history")
 
 
 class Admin (SQLModel, table=True):

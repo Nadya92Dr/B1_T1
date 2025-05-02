@@ -88,33 +88,114 @@
                 errorMsg.style.display = 'block';
             }
         });
+
     </script>
 
+    {% if user.is_admin %}
+    <div class="admin-section">
+        <h3>Администрирование</h3>
+        <form action="/recharge" method="POST">
+            <input type="email" name="email" placeholder="Email пользователя" required>
+            <input type="number" name="amount" placeholder="Сумма" required>
+            <button type="submit" class="btn btn-admin">Пополнить баланс</button>
+        </form>
+        <h4>Все пользователи</h4>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Никнейм</th>
+                    <th>Баланс</th>
+                    <th>Последняя транзакция</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in all_users %}
+                <tr>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.nickname }}</td>
+                    <td>{{ u.balance }} ₽</td>
+                    <td>
+                        {% set last_transaction = u.history[0] if u.history else None %}
+                        {% if last_transaction %}
+                        {{ last_transaction.timestamp.strftime('%d.%m.%Y %H:%M') }} -
+                        {{ last_transaction.details }}
+                        {% else %}
+                        Нет данных
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <style>
-        .loading-indicator {
-            align-items: center;
-            gap: 0.5rem;
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
         }
 
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .user-table th,
+        .user-table td {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            text-align: left;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+        .user-table th {
+            background-color: #f5f2ff;
         }
     </style>
+    {% endif %}
+</div>
+
+<style>
+    .loading-indicator {
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 
 
-    {% endblock %}
+{% if message %}
+<div class="alert success">
+    {{ message }}
+</div>
+{% endif %}
+
+<style>
+    .alert {
+        padding: 15px;
+        margin: 1rem 0;
+        border-radius: 4px;
+    }
+
+    .success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+</style>
+
+{% endblock %}

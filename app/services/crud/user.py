@@ -2,9 +2,10 @@ import bcrypt
 from models.user import User, Admin, User_history
 from datetime import datetime
 from typing import List, Optional
+from sqlalchemy.orm import joinedload
 
 def get_all_users(session) -> List[User]:
-    return session.query(User).all()
+    return session.query(User).options(joinedload(User.history)).all()
 
 def get_admins (session) -> List[Admin]:
     return session.query (Admin).all ()
@@ -51,30 +52,26 @@ def auth_user(email: str, password: str, session) -> Optional[User]:
     return user
 
 
-def recharge_balance(admin: Admin, user_id: int, amount: int, session) -> Optional[User]:
+def recharge_balance(current_user: User, email: str, amount: int, session) -> Optional[User]:
     
-    db_admin = session.get (Admin, admin.admin_id)
-    if not db_admin:
-        raise ValueError ("Только администратор может пополнять баланс")
+    if not current_user.is_admin:
+        raise ValueError("Только администратор может пополнять баланс")
     
     if amount <= 0:
         raise ValueError("Сумма пополнения должна быть положительной")
     
-    user = get_user_by_id(user_id, session)
+    user = get_user_by_email(email, session)
     if not user:
         return None
     user.balance += amount
 
-    session.add(user)
-    
     history_entry = User_history(
-        user_id=user_id,
+        user_id=user.id,
         action="recharge",
         timestamp=datetime.utcnow(),
         details=f"Пополнение баланса на {amount}₽"
     )
     session.add(history_entry)
-    
     
     session.commit()
     session.refresh(user)
