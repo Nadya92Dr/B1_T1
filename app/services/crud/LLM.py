@@ -19,7 +19,7 @@ def process_task_async(task_id: int, input_data: str, session):
             task.status = task_status.COMPLETED.value
 
             transaction = transaction(
-                user_id=user.user_id,
+                user_id=user.id,
                 amount=-task.cost,
                 description=f"LLM request {task.llm_id}",
                 related_task_id=task.prediction_task_id,
@@ -79,7 +79,7 @@ def run_llm (user_id:int, llm_id: int, input_data: str, session,  background_tas
 
     new_task = prediction_task (
         llm_id = llm_model.llm_id,
-        user_id = user.user_id,
+        user_id = user.id,
         input_data = input_data,
         cost = llm_model.cost_per_request,
         status = task_status.PENDING.value
@@ -98,7 +98,7 @@ def run_llm (user_id:int, llm_id: int, input_data: str, session,  background_tas
     # new_task.prediction_task_id, input_data, session)
 
     new_transaction = transaction(
-          user_id=user.user_id,
+          user_id=user.id,
           amount=llm_model.cost_per_request,
           description=f"LLM запрос {llm_id}",
           related_task_id=new_task.prediction_task_id,

@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 user_route = APIRouter()
 hash_password = HashPassword()
 
+
+
+
 async def get_current_user(email: str = Depends(authenticate_cookie), 
                            session=Depends(get_session)) -> User:
     user = UserService.get_user_by_email(email, session)
@@ -61,10 +64,11 @@ async def signup(
         )
 
         UserService.create_user(new_user, session)
-        session.commit()
+        # session.commit()
 
-        access_token = create_access_token(new_user.email)
-        response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+        access_token = create_access_token(email)
+        response = RedirectResponse(url="/", 
+    status_code=status.HTTP_302_FOUND)
         response.set_cookie(
             key=settings.COOKIE_NAME,
             value=f"Bearer {access_token}",
@@ -77,7 +81,7 @@ async def signup(
             "signup.html",
             {
                 "request": request,
-                "errors": ["Internal server error"],
+                 "errors": [f"Internal server error: {e}"],
                 "email": email
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -158,13 +162,21 @@ async def get_balance(user_id: int, session = Depends (get_session)):
         raise HTTPException(status_code=404, detail="User not found")
     return {"balance": user.balance}
 
-@user_route.get("/history")
-async def get_history(user_id: int, session = Depends (get_session)):
-    user = UserService.get_user_by_id(user_id, session)
+@user_route.get("/history", response_class=HTMLResponse)
+async def get_history(request: Request, user: User = Depends(get_current_user),
+    session = Depends(get_session)
+):
     if not user:
             raise HTTPException(status_code=404, detail="User not found")
-    user_history = UserService.get_user_history(user_id, session)
-    return {"history": user_history}
+    user_history = UserService.get_user_history(user.id, session)
+    return templates.TemplateResponse(
+        "history.html", 
+        {
+            "request": request,
+            "history": user_history,
+            "user": user
+        }
+    )
 
 @user_route.post("/recharge")
 async def recharge_balance(

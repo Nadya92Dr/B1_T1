@@ -99,7 +99,7 @@ if __name__ == '__main__':
         users = get_all_users(session)
 
     for user in users:
-        print(f'id: {user.User_id} - {user.email} - {user.nickname} - {user.balance}')
+        print(f'id: {user.id} - {user.email} - {user.nickname} - {user.balance}')
         print (type (user))
         print (user.say ())
 

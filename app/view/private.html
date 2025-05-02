@@ -13,32 +13,108 @@
     <form action="/logout" method="GET">
         <button type="submit" class="btn btn-secondary">Выйти</button>
     </form>
+
     <div class="card" style="margin-bottom: 2rem;">
         <h3 style="margin-bottom: 1rem;">Новый прогноз</h3>
-        <form method="POST" action="/prediction/predict">
+        <form id="predictionForm" method="POST" action="/prediction/predict">
             <div class="form-group">
-                <textarea name="text" placeholder="Введите текст для анализа..."
+                <textarea name="text" id="textInput" placeholder="Введите текст для анализа..."
                     style="width: 100%; padding: 1rem; border-radius: var(--radius); border: 1px solid #E0E0E0;"
-                    rows="4"></textarea>
+                    rows="4" required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Отправить</button>
+            <button type="submit" class="btn btn-primary">Создать предсказание</button>
         </form>
-    </div>
-
-    <div class="card">
-        <h3 style="margin-bottom: 1rem;">История операций</h3>
-        <div style="display: grid; gap: 1rem;">
-            {% for item in history %}
-            <div
-                style="display: flex; justify-content: space-between; padding: 1rem; border-radius: var(--radius); background: #F8F9FF;">
-                <div>
-                    <div style="font-weight: 500;">{{ item.description }}</div>
-                    <div style="font-size: 0.9em; color: var(--muted);">{{ item.date }}</div>
-                </div>
-                <div>{{ item.amount }} ₽</div>
+        <div id="predictionResult" style="margin-top: 1.5rem; display: none;">
+            <div class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <span>Обработка запроса...</span>
             </div>
-            {% endfor %}
+            <div class="result-content"
+                style="display: none; padding: 1rem; background: #f8f9fa; border-radius: var(--radius); margin-top: 1rem;">
+            </div>
+            <div class="error-message" style="display: none; color: #dc3545; margin-top: 1rem;"></div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const resultContainer = document.getElementById('predictionResult');
+            const loading = resultContainer.querySelector('.loading-indicator');
+            const resultContent = resultContainer.querySelector('.result-content');
+            const errorMsg = resultContainer.querySelector('.error-message');
+
+            // Сброс состояния
+            resultContainer.style.display = 'block';
+            loading.style.display = 'none';
+            resultContent.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            try {
+                // Отправка формы
+                loading.style.display = 'flex';
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
+                if (!response.ok) throw new Error('Ошибка сети');
+
+                const { task_id } = await response.json();
+
+                // Опрос статуса задачи
+                const checkStatus = async () => {
+                    const statusResponse = await fetch(`/prediction/status/${task_id}`);
+                    if (!statusResponse.ok) throw new Error('Ошибка проверки статуса');
+
+                    const { status, result } = await statusResponse.json();
+
+                    if (status === 'completed') {
+                        loading.style.display = 'none';
+                        resultContent.textContent = result;
+                        resultContent.style.display = 'block';
+                    } else if (status === 'failed') {
+                        throw new Error(result || 'Ошибка обработки запроса');
+                    } else {
+                        setTimeout(checkStatus, 2000);
+                    }
+                };
+
+                checkStatus();
+            } catch (error) {
+                loading.style.display = 'none';
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+
+    <style>
+        .loading-indicator {
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+
+    {% endblock %}

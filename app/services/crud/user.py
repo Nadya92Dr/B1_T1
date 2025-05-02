@@ -1,5 +1,6 @@
 import bcrypt
 from models.user import User, Admin, User_history
+from datetime import datetime
 from typing import List, Optional
 
 def get_all_users(session) -> List[User]:
@@ -63,8 +64,18 @@ def recharge_balance(admin: Admin, user_id: int, amount: int, session) -> Option
     if not user:
         return None
     user.balance += amount
-    
+
     session.add(user)
+    
+    history_entry = User_history(
+        user_id=user_id,
+        action="recharge",
+        timestamp=datetime.utcnow(),
+        details=f"Пополнение баланса на {amount}₽"
+    )
+    session.add(history_entry)
+    
+    
     session.commit()
     session.refresh(user)
     

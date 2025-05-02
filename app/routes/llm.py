@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Form
 from database.database import Session, get_session
 from models.llm import prediction_task, prediction_request, task_status
-from models.user import User
+from services.crud.llm import send_task
+from models.user import User, User_history
+from datetime import datetime
 from routes.user import get_current_user
 from typing import List,Dict, Any
 from pydantic import BaseModel
@@ -28,6 +30,7 @@ async def get_task_status(task_id: int, session: Session =Depends(get_session)):
     task = session.get(prediction_task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    session.refresh(task)
     return {
         "status": task.status,
         "result": task.result
@@ -76,20 +79,29 @@ async def predict_endpoint(
         )
     
     db_task = prediction_task(
-        user_id=user.user_id,
-        llm_id=llm_id
+        user_id=user.id,
+        llm_id=llm_id,
         input_data=text,
         status=task_status.PENDING,
-        result=None
-    )
+        result=None,
+        cost=1)
     
     session.add(db_task)
     session.commit()
+
+    history_entry = User_history(
+        user_id=user.id,
+        action="prediction",
+        timestamp=datetime.utcnow(),
+        details=f"Запрос: {text[:50]}..."  
+    )
+    session.add(history_entry)
+    
     session.refresh(db_task)
 
-    prediction_task({
+    send_task({
         "task_id": db_task.prediction_task_id,
-        "input_data": request.text
+        "input_data":text
     })
 
     return {

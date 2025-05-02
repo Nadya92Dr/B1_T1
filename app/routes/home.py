@@ -39,7 +39,7 @@ async def private_page(
     user: User = Depends(get_current_user),
     session=Depends(get_session)
 ):
-    history = UserService.get_user_history(user.user_id, session)
+    history = UserService.get_user_history(user.id, session)
     context = {
         "user": user,
         "history": history,

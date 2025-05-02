@@ -1,8 +1,8 @@
 import pika
 import time
 import logging
-# from sqlmodel import create_engine, Session
-from database.database import Session
+from database.database import engine
+from sqlmodel import Session
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from models.llm import prediction_task, task_status
 import json
@@ -16,12 +16,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 connection_params = pika.ConnectionParameters(
-    host='rabbitmq', 
+    host="rabbitmq", 
     port=5672,         
-    virtual_host='/',   
+    virtual_host="/",   
     credentials=pika.PlainCredentials(
-        username='rmuser', 
-        password='rmpassword'   
+        username="rmuser", 
+        password="rmpassword"  
     ),
     heartbeat=30,
     blocked_connection_timeout=2
@@ -37,17 +37,17 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 connection = pika.BlockingConnection(connection_params)
 channel = connection.channel()
-queue_name = 'ml_task_queue'
-channel.queue_declare(queue='ml_task_queue')
-channel.queue_declare(queue='result_queue')
+queue_name = "ml_task_queue"
+channel.queue_declare(queue="ml_task_queue")
+channel.queue_declare(queue="result_queue")
 
 def callback(ch, method, properties, body):
-    session = Session()
+    session = Session(engine)
     task = None
     try:
         data = json.loads(body)
-        task_id = data['task_id']
-        input_data = data['input_data']
+        task_id = data["task_id"]
+        input_data = data["input_data"]
         llm_id = data.get("llm_id", 1)
 
         task = session.query(prediction_task).get(task_id)
@@ -55,7 +55,7 @@ def callback(ch, method, properties, body):
             logger.error(f"Task {task_id} not found")
             return
         
-        task.status = task_status.PROCESSING
+        task.status = task_status.PENDING
         session.commit()
 
         messages = [
@@ -85,15 +85,15 @@ def callback(ch, method, properties, body):
         task.status = task_status.COMPLETED
         session.commit()
         
-        channel.basic_publish(
-            exchange='',
-            routing_key='result_queue',
-            body=json.dumps({
-                'task_id': task_id,
-                'status': task_status.COMPLETED,
-                'result': response
-            })
-        )
+        
+        # channel.basic_publish(
+        #     exchange="",
+        #     routing_key="result_queue",
+        #     body=json.dumps({
+        #         "task_id": task_id,
+        #         "status": task_status.COMPLETED,
+        #         "result": response
+        
         logger.info(f"Result published for task {task_id}")
 
     except Exception as e:
@@ -112,7 +112,7 @@ channel.basic_consume(
     auto_ack=False 
 )
 
-logger.info('Waiting for messages. To exit, press Ctrl+C')
+logger.info("Waiting for messages. To exit, press Ctrl+C")
 channel.start_consuming()
 
 

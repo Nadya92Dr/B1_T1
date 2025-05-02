@@ -1,0 +1,55 @@
+<!-- view/history.html -->
+{% extends "base.html" %}
+
+{% block title %}История действий{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Ваша история</h2>
+
+    {% if history %}
+    <div class="history-list">
+        {% for entry in history %}
+        <div class="history-item">
+            <div class="action-type">
+                {% if entry.action == "prediction" %}
+                🧠 Предсказание
+                {% elif entry.action == "recharge" %}
+                💰 Пополнение
+                {% endif %}
+            </div>
+            <div class="action-details">{{ entry.details }}</div>
+            <div class="action-time">
+                {{ entry.timestamp.strftime('%d.%m.%Y %H:%M') }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>История действий пуста</p>
+    {% endif %}
+</div>
+
+<style>
+    .history-item {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .action-type {
+        font-weight: 500;
+        color: var(--primary);
+        min-width: 120px;
+    }
+
+    .action-time {
+        color: var(--muted);
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 class User (SQLModel, table=True):
-    user_id: Optional[int] = Field (default = None, primary_key=True)
+    id: Optional[int] = Field (default = None, primary_key=True)
     email:str = Field (unique=True)
     password: str
     nickname: str
@@ -19,7 +19,7 @@ class User (SQLModel, table=True):
 
 class User_history (SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field (foreign_key = "user.user_id")
+    user_id: int = Field (foreign_key = "user.id")
     action: str
     timestamp: datetime 
     details: str
