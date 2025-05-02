@@ -4,7 +4,8 @@ import logging
 from database.database import engine
 from sqlmodel import Session
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from models.llm import prediction_task, task_status
+from models.llm import prediction_task, task_status, transaction
+from models.user import User
 import json
 
 
@@ -54,8 +55,22 @@ def callback(ch, method, properties, body):
         if not task:
             logger.error(f"Task {task_id} not found")
             return
-        
         task.status = task_status.PENDING
+
+        user = session.get (User, task.user_id)
+        if user.balance < task.cost:
+            raise Exception("Недостаточно средств на балансе")
+        user.balance -=task.cost
+        
+        new_transaction = transaction(
+            user_id=user.id,
+            amount=-task.cost,
+            description=f"Списание за предсказание {task.llm_id}",
+            related_task_id=task.prediction_task_id,
+            status="completed"
+        )
+        session.add(new_transaction)
+        
         session.commit()
 
         messages = [

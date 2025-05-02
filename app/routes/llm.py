@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Form
 from database.database import Session, get_session
-from models.llm import prediction_task, prediction_request, task_status
+from models.llm import llm, prediction_task, prediction_request, task_status
 from services.crud.llm import send_task
 from models.user import User, User_history
 from datetime import datetime
@@ -72,7 +72,11 @@ async def predict_endpoint(
     session: Session = Depends(get_session),
 ) -> Dict[str, Any]:
     
-    if user.balance <= 0:
+    llm_model = session.get(llm, llm_id)
+    if not llm_model:
+        raise HTTPException(status_code=404, detail="LLM model not found")
+    
+    if user.balance < llm_model.cost_per_request:
         raise HTTPException(
             status_code=402,
             detail="Insufficient balance to process request"
@@ -84,7 +88,7 @@ async def predict_endpoint(
         input_data=text,
         status=task_status.PENDING,
         result=None,
-        cost=1)
+        cost=llm_model.cost_per_request)
     
     session.add(db_task)
     session.commit()
@@ -96,7 +100,8 @@ async def predict_endpoint(
         details=f"Запрос: {text[:50]}..."  
     )
     session.add(history_entry)
-    
+    session.commit ()
+
     session.refresh(db_task)
 
     send_task({
